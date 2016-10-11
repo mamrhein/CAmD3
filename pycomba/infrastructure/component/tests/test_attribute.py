@@ -11,11 +11,20 @@
 # $Revision$
 
 import unittest
-from pycomba.infrastructure.component.attribute import Attribute, _NODEFAULT
-from pycomba.infrastructure.component.constraints import (is_number,
-                                                          non_negative,
-                                                          between)
+from pycomba.infrastructure.component.attribute import (
+    Attribute, _NODEFAULT, is_identifier)
+from pycomba.infrastructure.component.constraints import (
+    is_number, non_negative, between)
 from pycomba.infrastructure.component.immutable import immutable
+
+
+class HelperTest(unittest.TestCase):
+
+    def test_is_identifier(self):
+        self.assertTrue(is_identifier('_a_5'))
+        self.assertFalse(is_identifier('3abc'))
+        self.assertFalse(is_identifier('def'))
+        self.assertFalse(is_identifier(7))
 
 
 # helper to create class with attribute on the fly
@@ -47,6 +56,24 @@ class AttributeTest(unittest.TestCase):
         self.assertTrue(all(callable(c) for c in a._bound_constraints))
         self.assertEqual(a.__doc__, 'doc')
         self.assertEqual(a.name, 'a')
+        # immutable must instance of bool
+        self.assertRaises(AssertionError, Attribute, immutable='T')
+        # converter must be callable
+        self.assertRaises(AssertionError, Attribute, converter='x')
+        # constaints must be a single callable or an iterable of callables
+        self.assertRaises(AssertionError, Attribute, constraints=5)
+        self.assertRaises(AssertionError, Attribute, constraints=(5, 'a'))
+
+    def test_name(self):
+        a = Attribute()
+        self.assertRaises(ValueError, a.__set_name__, '9ab')
+        a.__set_name__('a')
+        self.assertEqual(a._priv_member, '_a')
+        self.assertIsNone(a.__set_name__('a'))
+        self.assertRaises(AttributeError, a.__set_name__, 'b')
+        a = Attribute()
+        a.__set_name__('_a')
+        self.assertEqual(a._priv_member, '_a_')
 
     def test_access(self):
         a1 = Attribute()
@@ -57,6 +84,9 @@ class AttributeTest(unittest.TestCase):
         self.assertRaises(AttributeError, getattr, t1, 'x')
         t1.x = 7
         self.assertEqual(t1.x, 7)
+        del t1.x
+        self.assertRaises(AttributeError, getattr, t1, 'x')
+        self.assertIsNone(delattr(t1, 'x'))
         self.assertEqual(t1.y, 1)
         t1.y = 5
         self.assertEqual(t1.y, 5)
@@ -69,6 +99,9 @@ class AttributeTest(unittest.TestCase):
         self.assertRaises(AttributeError, getattr, t2, 'x')
         t2.x = 7
         self.assertEqual(t2.x, 7)
+        del t2.x
+        self.assertRaises(AttributeError, getattr, t2, 'x')
+        self.assertIsNone(delattr(t2, 'x'))
         self.assertEqual(t2.y, 1)
         t2.y = 5
         self.assertEqual(t2.y, 5)
@@ -127,6 +160,7 @@ class AttributeTest(unittest.TestCase):
         t.x = '5'
         self.assertEqual(t.x, 5)
         self.assertRaises(ValueError, setattr, t, 'x', 'a')
+        self.assertRaises(TypeError, setattr, t, 'x', object())
 
     def test_constraints(self):
         # single constraint
@@ -137,7 +171,9 @@ class AttributeTest(unittest.TestCase):
         self.assertEqual(t.x, 5)
         self.assertRaises(ValueError, setattr, t, 'x', 'a')
         # several constraints
-        a = Attribute(constraints=(is_number, non_negative, between(1, 7)))
+        eq5 = lambda value: value == 5
+        a = Attribute(constraints=(is_number, non_negative, between(1, 7),
+                                   eq5))
         Test = create_cls('Test', {'x': a})
         t = Test()
         t.x = 5
@@ -145,6 +181,7 @@ class AttributeTest(unittest.TestCase):
         self.assertRaises(ValueError, setattr, t, 'x', 'a')
         self.assertRaises(ValueError, setattr, t, 'x', -3)
         self.assertRaises(ValueError, setattr, t, 'x', 9)
+        self.assertRaises(ValueError, setattr, t, 'x', 2)
 
 
 if __name__ == '__main__':
