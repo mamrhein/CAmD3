@@ -56,6 +56,7 @@ class ImmutableTest(unittest.TestCase):
     def test_copy(self):
         t4 = T4()
         self.assertTrue(t4.__copy__() is t4)
+        self.assertTrue(t4.__deepcopy__() is t4)
 
     def test_register(self):
         Immutable.register(T5)
