@@ -14,8 +14,11 @@ from fractions import Fraction
 import unittest
 from pycomba.infrastructure.component.constraints import (instance, is_number,
                                                           is_rational, is_int,
+                                                          lt, le, gt, ge,
                                                           non_negative,
-                                                          between)
+                                                          between,
+                                                          length, max_length,
+                                                          min_length)
 
 
 # TODO: more tests for constraints
@@ -32,6 +35,28 @@ class ConstraintTest(unittest.TestCase):
         self.assertTrue(not is_int(one_third))
         self.assertTrue(instance(type)(int))
         self.assertTrue(instance(Fraction)(one_third))
+
+    def test_value_constraints(self):
+        one_third = Fraction(1, 3)
+        for num in (-3, 2.7, one_third):
+            self.assertTrue(lt(3)(num))
+            self.assertTrue(le(2.7)(num))
+            self.assertTrue(gt(-7)(num))
+            self.assertTrue(ge(-3)(num))
+            self.assertTrue(between(-3, 2.7)(num))
+        for num in (one_third, 1.3):
+            self.assertTrue(non_negative(num))
+        self.assertFalse(non_negative(-4))
+
+    def test_length_constraints(self):
+        s = 'abc'
+        self.assertTrue(length(3)(s))
+        self.assertFalse(length(5)(s))
+        self.assertTrue(max_length(5)(s))
+        self.assertFalse(max_length(2)(s))
+        self.assertTrue(min_length(2)(s))
+        self.assertTrue(min_length(3)(s))
+        self.assertFalse(min_length(5)(s))
 
 
 if __name__ == '__main__':
