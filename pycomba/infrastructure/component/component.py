@@ -82,6 +82,9 @@ class ComponentMeta(ABCMeta):
             metacls._init_slots(cls_name, bases, namespace)
         # create class
         cls = super().__new__(metacls, cls_name, bases, dict(namespace))
+        # additional class attributes
+        cls.__virtual_bases__ = _ABCSet()
+        cls.__adapters__ = {}   # type: Dict[type, MutableSequence[Callable]]
         # call __init_subclass__ of direct superclass
         try:
             init_subclass = super(cls, cls).__init_subclass__
@@ -91,12 +94,6 @@ class ComponentMeta(ABCMeta):
             init_subclass(**kwds)
         # now the new class is ready
         return cls
-
-    def __init__(cls, name: str, bases: Tuple[type, ...],
-                 namespace: Dict[str, Any], **kwds: Any) -> None:
-        super().__init__(name, bases, namespace)
-        cls.__virtual_bases__ = _ABCSet()
-        cls.__adapters__ = {}   # type: Dict[type, MutableSequence[Callable]]
 
     @classmethod
     def __prepare__(metacls, name: str, bases: Tuple[type, ...],
