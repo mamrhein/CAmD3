@@ -17,8 +17,12 @@
 """Base classes for defining extensions of other classes."""
 
 
+# standard lib imports
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Mapping
+from weakref import WeakKeyDictionary
+
+# local imports
 from .component import Component
 
 
@@ -44,18 +48,55 @@ class Extension(Component):
         cls.add_adapter(adapter)
 
     @classmethod
-    @abstractmethod
     def get_from(cls, obj: object) -> 'Extension':
         """Obtain extension from `obj`."""
+        container = cls._get_mapping(obj)
+        try:
+            return container[cls._get_key(obj)]
+        except TypeError:
+            raise TypeError("Instance of '%s' cannot be extended." %
+                            obj.__class__.__name__,) from None
+        except KeyError:
+            raise ValueError("%r does not have an extension of type '%s'." %
+                             (obj, cls.__name__)) from None
 
-    @abstractmethod
+    @classmethod
+    def remove_from(cls, obj: object) -> None:
+        """Remove extension from `obj`."""
+        container = cls._get_mapping(obj)
+        try:
+            del container[cls._get_key(obj)]
+        except TypeError:
+            raise TypeError("Instance of '%s' cannot be extended." %
+                            obj.__class__.__name__,) from None
+        except KeyError:
+            raise ValueError("%r does not have an extension of type '%s'." %
+                             (obj, cls.__name__)) from None
+
     def attach_to(self, obj: object) -> None:
         """Attach extension to `obj`."""
+        cls = self.__class__
+        container = cls._get_mapping(obj)
+        try:
+            container[cls._get_key(obj)] = self
+        except TypeError:
+            raise TypeError("Instance of '%s' cannot be extended." %
+                            obj.__class__.__name__,) from None
+
+    @classmethod
+    @abstractmethod
+    def _get_mapping(cls, obj: Any) -> Mapping:
+        """Return the mapping which contains the extensions instance."""
+
+    @classmethod
+    @abstractmethod
+    def _get_key(cls, obj: Any) -> Any:
+        """Return the key under which the extensions instance is stored."""
 
 
 class StateExtension(Extension):
 
-    """Abstract base class for extension which extend the state of an
+    """Abstract base class for extensions which extend the state of an
     object."""
 
     __slots__ = ()
@@ -66,39 +107,51 @@ class StateExtension(Extension):
         key = kwds.pop('key', None)
         if key is None:
             try:
-                cls.key
+                cls._key
             except AttributeError:
-                cls.key = '.'.join((cls.__module__, cls.__name__))
+                cls._key = '.'.join((cls.__module__, cls.__name__))
         else:
-            cls.key = key
+            cls._key = key
 
     @classmethod
-    def get_from(cls, obj: object) -> 'StateExtension':
-        """Obtain state extension from `obj`."""
+    def _get_mapping(cls, obj: Any) -> Mapping:
+        """Return the mapping which contains the extensions instance."""
         try:
-            dict_ = obj.__dict__
+            return obj.__dict__
         except AttributeError:
-            pass
-        else:
-            try:
-                return dict_[cls.key]
-            except KeyError:
-                pass
-        raise ValueError("%r does not have an extension of type '%s'." %
-                         (obj, cls.__name__))
+            raise TypeError("Instance of '%s' cannot be extended." %
+                            obj.__class__.__name__,) from None
 
-    def attach_to(self, obj: object) -> None:
-        """Extend state of `obj`."""
-        try:
-            dict_ = obj.__dict__
-        except AttributeError:
-            pass
-        else:
+    @classmethod
+    def _get_key(cls, obj: Any) -> Any:
+        """Return the key under which the extensions instance is stored."""
+        return cls._key
+
+
+class TransientExtension(Extension):
+
+    """Abstract base class for transient extension."""
+
+    __slots__ = ()
+
+    @classmethod
+    def __init_subclass__(cls, **kwds: Any) -> None:
+        super().__init_subclass__(**kwds)
+        obj_map = kwds.pop('obj_map', None)
+        if obj_map is None:
             try:
-                dict_[self.__class__.key] = self
-            except:
-                pass
-            else:
-                return
-        raise TypeError("Instance of '%s' cannot be extended." %
-                        obj.__class__.__name__,)
+                cls._obj_map
+            except AttributeError:
+                cls._obj_map = WeakKeyDictionary()
+        else:
+            cls._obj_map = obj_map
+
+    @classmethod
+    def _get_mapping(cls, obj: Any) -> Mapping:
+        """Return the mapping which contains the extensions instance."""
+        return cls._obj_map
+
+    @classmethod
+    def _get_key(cls, obj: Any) -> Any:
+        """Return the key under which the extensions instance is stored."""
+        return obj
