@@ -101,6 +101,11 @@ class ComponentMeta(ABCMeta):
                     **kwds: Any) -> MutableMapping:
         return OrderedDict()
 
+    def __init__(cls, cls_name: str, bases: Tuple[type, ...],
+                 namespace: MutableMapping[str, Any],
+                 **kwds: Any) -> None:
+        super().__init__(cls_name, bases, namespace)
+
     @property
     def definition_order(cls):
         return cls.__definition_order__
