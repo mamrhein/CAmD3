@@ -176,6 +176,8 @@ class EnhancedEncoderTest(unittest.TestCase):
         jsonRepr = buf.getvalue()
         self.assertTrue(jsonRepr in ('{"set": "<1, 2, 3>", "f": "3/4"}',
                                      '{"f": "3/4", "set": "<1, 2, 3>"}'))
+        # no encoder and no transformer
+        self.assertRaises(ValueError, encoder.encode, object(), buf)
 
 
 class FromDict(object):
