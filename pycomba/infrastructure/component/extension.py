@@ -61,9 +61,16 @@ class StateExtension(Extension):
     __slots__ = ()
 
     @classmethod
-    @abstractmethod
-    def _namespace(cls):
-        return '.'.join((cls.__module__, cls.__name__))
+    def __init_subclass__(cls, **kwds: Any) -> None:
+        super().__init_subclass__(**kwds)
+        key = kwds.pop('key', None)
+        if key is None:
+            try:
+                cls.key
+            except AttributeError:
+                cls.key = '.'.join((cls.__module__, cls.__name__))
+        else:
+            cls.key = key
 
     @classmethod
     def get_from(cls, obj: object) -> 'StateExtension':
@@ -74,7 +81,7 @@ class StateExtension(Extension):
             pass
         else:
             try:
-                return dict_[cls._namespace()]
+                return dict_[cls.key]
             except KeyError:
                 pass
         raise ValueError("%r does not have an extension of type '%s'." %
@@ -88,7 +95,7 @@ class StateExtension(Extension):
             pass
         else:
             try:
-                dict_[self._namespace()] = self
+                dict_[self.__class__.key] = self
             except:
                 pass
             else:
