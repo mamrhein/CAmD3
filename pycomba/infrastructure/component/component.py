@@ -69,8 +69,7 @@ class ComponentMeta(ABCMeta):
         if isinstance(init_subclass, types.FunctionType):
             namespace['__init_subclass__'] = classmethod(init_subclass)
         # save definition order
-        if '__definition_order__' not in namespace:
-            namespace['__definition_order__'] = tuple(namespace)
+        namespace['__definition_order__'] = tuple(namespace)
         # set name of descriptors which have a __set_name__ method
         for name, attr in namespace.items():
             try:
@@ -81,7 +80,7 @@ class ComponentMeta(ABCMeta):
         if any(issubclass(cls, Immutable) for cls in bases):
             metacls._init_slots(cls_name, bases, namespace)
         # create class
-        cls = super().__new__(metacls, cls_name, bases, dict(namespace))
+        cls = super().__new__(metacls, cls_name, bases, namespace)
         # additional class attributes
         cls.__virtual_bases__ = _ABCSet()
         cls.__adapters__ = {}   # type: Dict[type, MutableSequence[Callable]]
@@ -99,6 +98,10 @@ class ComponentMeta(ABCMeta):
     def __prepare__(metacls, name: str, bases: Tuple[type, ...],
                     **kwds: Any) -> MutableMapping:
         return OrderedDict()
+
+    @property
+    def definition_order(cls):
+        return cls.__definition_order__
 
     @classmethod
     def _init_slots(metacls, cls_name: str, bases: Tuple[type, ...],
@@ -149,7 +152,7 @@ class ComponentMeta(ABCMeta):
         """Return the names of all attributes defined by the component (in
         definition order).
         """
-        return tuple(name for name in cls.__definition_order__
+        return tuple(name for name in cls.definition_order
                      if isinstance(getattr(cls, name), Attribute))
 
     @property
@@ -159,28 +162,12 @@ class ComponentMeta(ABCMeta):
         """
         seen = {}
         return tuple(seen.setdefault(name, name)
-                     for name in chain(*(acls.__definition_order__
+                     for name in chain(*(acls.definition_order
                                          for acls
                                          in reversed(cls.__mro__[:-1])
                                          if issubclass(acls, Component)))
                      if name not in seen and
                      isinstance(getattr(cls, name), Attribute))
-
-    # @property
-    # def all_properties(cls) -> Tuple[str, ...]:
-    #     """Return the names of all attributes and properties defined by the
-    #     component and its base classes.
-    #     """
-    #     return tuple(name for name in cls.__definition_order__
-    #                  if isinstance(getattr(cls, name), (Attribute, property)))
-    #
-    # @property
-    # def method_names(cls) -> Tuple[str, ...]:
-    #     """Return the names of all methods defined by the component and its
-    #     base classes.
-    #     """
-    #     return tuple(name for name in cls.__definition_order__
-    #                  if isinstance(getattr(cls, name), (types.FunctionType,)))
 
     @property
     def interfaces(cls) -> AbstractSet[type]:
