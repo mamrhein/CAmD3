@@ -49,7 +49,7 @@ class LocalIDGeneratorFactory(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, context: Iterable, incrementor: Callable[[Any], Any]) \
             -> IDGenerator:
-        pass
+        """Create generator of locally unique IDs."""
 
 
 # factory for IDGenerator
@@ -80,7 +80,7 @@ class LocalNumIDGeneratorFactory(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, context: Iterable = (), start: Optional[int] = None) \
             -> IDGenerator:
-        pass
+        """Create generator of locally unique numerical IDs."""
 
 
 # factory for IDGenerator
