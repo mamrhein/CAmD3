@@ -19,7 +19,7 @@
 
 # standard lib imports
 from abc import abstractmethod
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 from weakref import WeakKeyDictionary
 
 # local imports
@@ -85,7 +85,7 @@ class Extension(Component):
 
     @classmethod
     @abstractmethod
-    def _get_mapping(cls, obj: Any) -> Mapping:
+    def _get_mapping(cls, obj: Any) -> Optional[Mapping]:
         """Return the mapping which contains the extensions instance."""
 
     @classmethod
@@ -114,13 +114,9 @@ class StateExtension(Extension):
             cls._key = key
 
     @classmethod
-    def _get_mapping(cls, obj: Any) -> Mapping:
+    def _get_mapping(cls, obj: Any) -> Optional[Mapping]:
         """Return the mapping which contains the extensions instance."""
-        try:
-            return obj.__dict__
-        except AttributeError:
-            raise TypeError("Instance of '%s' cannot be extended." %
-                            obj.__class__.__name__,) from None
+        return getattr(obj, '__dict__', None)
 
     @classmethod
     def _get_key(cls, obj: Any) -> Any:
