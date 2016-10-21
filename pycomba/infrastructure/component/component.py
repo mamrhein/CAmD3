@@ -17,14 +17,16 @@
 """Basic component infrastructure"""
 
 
+# standard lib imports
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
-from inspect import isabstract
 from itertools import chain
 import types
-from typing import (Any, AbstractSet, Callable, Dict, MutableMapping,
-                    Sequence, Set, Tuple)
+from typing import (Any, AbstractSet, Callable, MutableMapping, Sequence, Set,
+                    Tuple)
 from weakref import WeakSet
+
+# local imports
 from .attribute import Attribute
 from .exceptions import ComponentLookupError
 from .immutable import Immutable
@@ -125,11 +127,9 @@ class ComponentMeta(ABCMeta):
         return sorted(set(chain(dir(type(cls)), *(ns.__dict__.keys()
                                                   for ns in cls.__mro__))))
 
-    def __call__(cls, *args: Any, **kwds: Any) -> 'Component':
-        if isabstract(cls) and len(args) == 1 and not kwds:
-            # abstract class called with just one argument
-            return cls.adapt(args[0])
-        return super().__call__(*args, **kwds)
+    def __getitem__(cls, obj: Any) -> 'Component':
+        """Shortcut for cls.adapt(obj)."""
+        return cls.adapt(obj)
 
     def adapt(cls, obj: Any) -> 'Component':
         """Return an object adapting `obj` to the interface defined by

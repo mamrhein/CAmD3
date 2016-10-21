@@ -91,17 +91,17 @@ class StateAdapterTest(unittest.TestCase):
     def testGetState(self):
         # class without __slots__
         name = Name(['Hans', 'August'], 'Bronner')
-        st = State(name).get_state()
+        st = State[name].get_state()
         self.assertEqual(st, name.__dict__)
         self.assertTrue(st is not self.__dict__)
         # class with __slots__
         addr = Address('Klubweg 35', 29338, 'Posemuckel')
-        st = State(addr).get_state()
+        st = State.adapt(addr).get_state()
         for attr, val in all_slot_attrs(addr):
             self.assertEqual(st[attr], val)
         # class with inherited __slots__
         addr = Address2('Klubweg 35', 29338, 'Posemuckel', 'Takatuka')
-        st = State(addr).get_state()
+        st = State.adapt(addr).get_state()
         for attr, val in all_slot_attrs(addr):
             self.assertEqual(st[attr], val)
         # nested types
@@ -109,31 +109,31 @@ class StateAdapterTest(unittest.TestCase):
         name = Name(['Hans', 'August'], 'Bronner')
         addr = Address('Klubweg 35', 29338, 'Posemuckel')
         hans = Person(id, name, addr)
-        st = State(hans).get_state()
+        st = State[hans].get_state()
         self.assertEqual(st, hans.__getstate__())
         # standard type without __dict__ and __slots__
         dt = datetime(2014, 1, 2, 22, 17, 47, 238000)
-        self.assertRaises(TypeError, State(dt).get_state)
-        self.assertRaises(TypeError, State(25).get_state)
+        self.assertRaises(TypeError, State[dt].get_state)
+        self.assertRaises(TypeError, State[25].get_state)
 
     def testSetState(self):
         # class without __slots__
         name = Name(['Hans', 'August'], 'Bronner')
         name2 = object.__new__(Name)
-        State(name2).set_state(name.__dict__)
+        State[name2].set_state(name.__dict__)
         self.assertEqual(name, name2)
         # class with __slots__
         addr1 = Address('Klubweg 35', 29338, 'Posemuckel')
-        st = State(addr1).get_state()
+        st = State[addr1].get_state()
         addr2 = object.__new__(Address)
-        State(addr2).set_state(st)
+        State[addr2].set_state(st)
         for attr, val in all_slot_attrs(addr1):
             self.assertEqual(getattr(addr2, attr), val)
         # class with inherited __slots__
         addr1 = Address2('Klubweg 35', 29338, 'Posemuckel', 'Takatuka')
-        st = State(addr1).get_state()
+        st = State[addr1].get_state()
         addr2 = object.__new__(Address2)
-        State(addr2).set_state(st)
+        State[addr2].set_state(st)
         for attr, val in all_slot_attrs(addr1):
             self.assertEqual(getattr(addr2, attr), val)
         # nested types
@@ -141,16 +141,16 @@ class StateAdapterTest(unittest.TestCase):
         name = Name(['Hans', 'August'], 'Bronner')
         addr = Address('Klubweg 35', 29338, 'Posemuckel')
         hans = Person(id, name, addr)
-        st = State(hans).get_state()
+        st = State[hans].get_state()
         hans2 = object.__new__(Person)
-        self.assertRaises(TypeError, State(hans2).set_state, st)
+        self.assertRaises(TypeError, State[hans2].set_state, st)
         hans2 = object.__new__(Person2)
-        State(hans2).set_state(st)
+        State[hans2].set_state(st)
         self.assertEqual(hans2, hans)
         # standard type without __dict__ and __slots__
         dt = datetime(2014, 1, 2, 22, 17, 47, 238000)
-        self.assertRaises(TypeError, State(dt).set_state, dt)
-        self.assertRaises(TypeError, State(5).set_state, 5)
+        self.assertRaises(TypeError, State[dt].set_state, dt)
+        self.assertRaises(TypeError, State[5].set_state, 5)
 
 
 if __name__ == '__main__':

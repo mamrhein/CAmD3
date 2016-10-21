@@ -50,7 +50,7 @@ class Serializer_:
                 full_cls_name = '.'.join((cls.__module__, cls.__name__))
                 return {'__class__': full_cls_name,
                         '__clsargs__': clsargs}
-        state = State(obj).get_state()
+        state = State[obj].get_state()
         if state is None:
             # unable to retrieve state
             return None
@@ -119,7 +119,7 @@ class Deserializer_:
             del obj_repr['__class__']
             state = obj_repr
         obj = object.__new__(cls)
-        State(obj).set_state(state)
+        State[obj].set_state(state)
         return obj
 
     def __init__(self, format: str) -> None:
