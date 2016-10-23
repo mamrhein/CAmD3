@@ -59,12 +59,12 @@ class ComponentMeta(ABCMeta):
         namespace(Mapping[str, Any]): namespace of new component
 
     Returns:
-        Component: new component
+        ComponentMeta: new component class
     """
 
     def __new__(metacls, cls_name: str, bases: Tuple[type, ...],
                 namespace: MutableMapping[str, Any],
-                **kwds: Any) -> 'Component':
+                **kwds: Any) -> 'ComponentMeta':
         # turn __init_subclass__ into a classmethod if it is defined as
         # instance method
         init_subclass = namespace.get('__init_subclass__')  # type: Callable
