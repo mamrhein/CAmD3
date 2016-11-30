@@ -115,9 +115,8 @@ class ComponentMeta(ABCMeta):
                     namespace: MutableMapping[str, Any]) -> None:
         all_bases = set(chain(*(cls.__mro__[:-1] for cls in bases
                                 if cls is not object)))
-        if any(not hasattr(cls, '__slots__')
-               for cls in all_bases
-               if cls is not object):
+        if any('__slots__' not in cls.__dict__
+               for cls in all_bases):
             raise TypeError("All base classes of '" + cls_name +
                             "' must have an attribute '__slots__'.")
         slots = namespace.get('__slots__', ())
