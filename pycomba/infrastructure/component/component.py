@@ -174,13 +174,6 @@ class ComponentMeta(ABCMeta):
                      if name not in seen and
                      isinstance(getattr(cls, name), Attribute))
 
-    @property
-    def interfaces(cls) -> AbstractSet[type]:
-        """Return the most specific interfaces implemented by the component.
-        """
-        return frozenset(_ABCSet(chain(cls.__virtual_bases__,
-                                       cls.__bases__[:-1])))
-
     def register(cls, subcls: type):
         """Register a virtual subclass of the component."""
         try:
