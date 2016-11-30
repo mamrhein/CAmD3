@@ -109,10 +109,16 @@ class Signature:
         arg_types = []
         var_arg_type = None
         if isinstance(obj, type):               # it's a class?
-            sig = inspect.signature(_get_constructor(obj))
+            try:
+                sig = inspect.signature(_get_constructor(obj))
+            except TypeError:
+                sig = None
             skip_arg = 1
         else:
-            sig = inspect.signature(obj)
+            try:
+                sig = inspect.signature(obj)
+            except TypeError:
+                sig = None
             skip_arg = 0
         if sig:
             return_type = sig.return_annotation
@@ -141,7 +147,10 @@ class Signature:
                     namespace = (namespace or
                                  importlib.import_module(obj.__module__)
                                  .__dict__)
-                    annotation = eval(annotation, namespace)
+                    try:
+                        annotation = eval(annotation, namespace)
+                    except NameError:
+                        annotation = None
                 if isinstance(annotation, type):
                     if kind == _VAR_POSITIONAL:
                         var_arg_type = annotation
@@ -215,7 +224,10 @@ class Signature:
         args = ', '.join((_type_repr(t) for t in self.arg_types))
         var_arg_type = self.var_arg_type
         if var_arg_type is not None:
-            args += ', *' + _type_repr(var_arg_type)
+            if args:
+                args += ', *' + _type_repr(var_arg_type)
+            else:
+                args = '*' + _type_repr(var_arg_type)
         return_type = self.return_type
         if return_type is None:
             return "({}) -> None".format(args)
