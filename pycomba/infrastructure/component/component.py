@@ -22,9 +22,7 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from itertools import chain
 import types
-from typing import (Any, AbstractSet, Callable, MutableMapping, Sequence, Set,
-                    Tuple)
-from weakref import WeakSet
+from typing import (Any, Callable, Iterable, MutableMapping, Sequence, Tuple)
 
 # local imports
 from .attribute import Attribute
@@ -33,7 +31,11 @@ from .immutable import Immutable
 from .signature import signature
 
 
-class _ABCSet(WeakSet, Set[type]):
+class _ABCSet(set):
+
+    def __init__(self, it: Iterable[type] = ()) -> None:
+        for elem in it:
+            self.add(elem)
 
     def add(self, abc: type) -> None:
         to_be_removed = []
