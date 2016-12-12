@@ -14,7 +14,7 @@
 import unittest
 from typing import Any, Dict, Optional, Union
 from pycomba.infrastructure.component.signature import (
-    _get_constructor, _type_repr, _is_compatible, Signature, signature
+    _get_constructor, Signature, signature
 )
 
 
@@ -104,6 +104,8 @@ class SignatureTest(unittest.TestCase):
         self.assertIsNone(_get_constructor(all))
 
     def test_signature(self):
+        self.assertEqual(signature(object),
+                         Signature((), None, object))
         self.assertEqual(signature(WithInit),
                          Signature((Dict, tuple), int, WithInit))
         self.assertEqual(signature(WithOutInit),
@@ -123,6 +125,7 @@ class SignatureTest(unittest.TestCase):
         self.assertRaises(ValueError, signature, func5)
         self.assertRaises(ValueError, signature, func6)
         # no signature
+        self.assertRaises(ValueError, signature, Meta)
         self.assertRaises(ValueError, signature, int)
         self.assertRaises(ValueError, signature, 5)
 

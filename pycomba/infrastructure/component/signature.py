@@ -110,8 +110,8 @@ class Signature:
         var_arg_type = None
         if isinstance(obj, type):               # it's a class?
             try:
-                sig = inspect.signature(_get_constructor(obj))
-            except TypeError:
+                sig = inspect.signature(_get_constructor(obj) or obj)
+            except (TypeError, ValueError):
                 sig = None
             skip_arg = 1
         else:
