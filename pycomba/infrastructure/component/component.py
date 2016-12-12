@@ -195,9 +195,12 @@ class ComponentMeta(ABCMeta):
             "Adapter must have exactly 1 argument."
         arg_type = arg_types[0]
         try:
-            cls.__adapters__[arg_type].append(adapter)
+            adapters = cls.__adapters__[arg_type]
         except KeyError:
             cls.__adapters__[arg_type] = [adapter]
+        else:
+            if adapter not in adapters:
+                adapters.append(adapter)
         return adapter
 
     def get_adapter(cls, obj):
