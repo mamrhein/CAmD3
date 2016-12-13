@@ -45,9 +45,12 @@ class ComponentRegistry:
             interface = sgn.return_type
         if interface:
             try:
-                self._factories[(interface, name)].append(factory)
+                factories = self._factories[(interface, name)]
             except KeyError:
                 self._factories[(interface, name)] = [factory]
+            else:
+                if factory not in factories:
+                    factories.append(factory)
         else:
             raise ComponentRegisterError("Couldn't determine interface of "
                                          "objects build by '{}'"
@@ -61,9 +64,12 @@ class ComponentRegistry:
                                              "`utility` must be a class.")
             interface = utility
         try:
-            self._utilities[(interface, name)].append(utility)
+            utilities = self._utilities[(interface, name)]
         except KeyError:
             self._utilities[(interface, name)] = [utility]
+        else:
+            if utility not in utilities:
+                utilities.append(utility)
 
     def _lookup_utility(self, interface: type, name: str = None) \
             -> _UtilityFunc:
