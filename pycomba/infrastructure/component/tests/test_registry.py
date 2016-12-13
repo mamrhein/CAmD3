@@ -12,8 +12,9 @@
 
 from typing import Any
 import unittest
+from pycomba.infrastructure.component import Component
 from pycomba.infrastructure.component.registry import (
-    ComponentLookupError, ComponentRegisterError, ComponentRegistry,
+    ComponentLookupError, ComponentRegisterError,
     get_component_registry, get_utility, register_factory, register_utility)
 
 
@@ -40,9 +41,10 @@ def Int2StrFactory() -> Int2Str:
     return int_2_str
 
 
-class Util1:
+class Util1(Component):
 
-    pass
+    def __init__(self):
+        pass
 
 
 class Util2(Util1):
@@ -71,7 +73,7 @@ class Util4(Util2):
 
 
 def Util4Factory() -> Util4:
-    return Util4
+    return Util4()
 
 
 class RegistryTest(unittest.TestCase):
@@ -121,7 +123,7 @@ class RegistryTest(unittest.TestCase):
                           unknown_return_type)
         # utility doesn't implement given interface
         self.assertRaises(ComponentRegisterError, register_utility,
-                          Int2Str, Util2)
+                          Util1(), Util2)
         # function with corresponding interface
         register_utility(int_2_str, Int2Str)
         self.assertIn(int_2_str, self.registry._utilities[(Int2Str, None)])
@@ -142,27 +144,30 @@ class RegistryTest(unittest.TestCase):
         register_utility(int.__str__, Int2Str, name='int_2_str')
         self.assertEqual(self.registry._utilities[(Int2Str, 'int_2_str')],
                          [int_2_str, int.__str__])
-        # class w/o interface given
-        register_utility(Util1)
-        self.assertEqual(self.registry._utilities[(Util1, None)], [Util1])
+        # component w/o interface given
+        util = Util1()
+        register_utility(util)
+        self.assertEqual(self.registry._utilities[(Util1, None)], [util])
 
     def test_get_utility(self):
         name = 'utils'
-        # class w/o interface given
-        register_utility(Util2)
-        self.assertIs(get_utility(Util2), Util2)
-        register_utility(Util2, name=name)
-        self.assertIs(get_utility(Util2, name=name), Util2)
+        # instance w/o interface given
+        util = Util2()
+        register_utility(util)
+        self.assertIs(get_utility(Util2), util)
+        register_utility(util, name=name)
+        self.assertIs(get_utility(Util2, name=name), util)
         # another class registered with same interface
-        register_utility(Util3, Util2, name=name)
-        self.assertIs(get_utility(Util2, name=name), Util3)
+        util = Util3()
+        register_utility(util, Util2, name=name)
+        self.assertIs(get_utility(Util2, name=name), util)
         # more general interface
-        self.assertIs(get_utility(Util1, name=name), Util3)
+        self.assertIs(get_utility(Util1, name=name), util)
         # no utility registered
         self.assertRaises(ComponentLookupError, get_utility, Util3, name=name)
         # no utility registered, but corresponding factory
         register_factory(Util4Factory, name=name)
-        self.assertIs(get_utility(Util4, name=name), Util4)
+        self.assertIsInstance(get_utility(Util4, name=name), Util4)
 
     # def tearDown(self):
     #     pass

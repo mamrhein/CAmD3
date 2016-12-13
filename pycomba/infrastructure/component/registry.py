@@ -21,6 +21,7 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # local imports
+from .component import ComponentMeta
 from .exceptions import ComponentRegisterError, ComponentLookupError
 from .signature import signature
 from ...gbbs.tools import iter_subclasses
@@ -71,18 +72,20 @@ class ComponentRegistry:
                          interface: type = None, name: str = None) -> None:
         if interface is Any:
             raise ComponentRegisterError("Interface must not be 'Any'.")
-        if isinstance(utility, type):
+        util_type = type(utility)
+        if isinstance(util_type, ComponentMeta):
             if interface is None:
-                interface = utility
-            elif not issubclass(utility, interface):
+                interface = util_type
+            elif not isinstance(utility, interface):
                 raise ComponentRegisterError(
-                    "Given `utility` {} does not implement "
+                    "Given `utility` {} does not provide "
                     "given `interface` {}."
                     .format(utility, interface))
         else:
             if interface is None:
-                raise ComponentRegisterError("If no `interface` is given, "
-                                             "`utility` must be a class.")
+                raise ComponentRegisterError(
+                    "If no `interface` is given, `utility` must be an "
+                    "instance of 'ComponentMeta'.")
         try:
             utilities = self._utilities[(interface, name)]
         except KeyError:
@@ -131,7 +134,7 @@ def get_component_registry():
 
 def register_factory(factory: _Factory, interface: type = None,
                      name: str = None) -> None:
-    """Register given `factory` as factory for obejcts that provide the
+    """Register given `factory` as factory for objects that provide the
     given interface."""
     reg = get_component_registry()
     reg.register_factory(factory, interface, name)
