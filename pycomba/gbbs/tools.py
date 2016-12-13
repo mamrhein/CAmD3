@@ -59,8 +59,12 @@ def iter_subclasses(cls, recursive=True):
     Each subclass is returned only once, even if it is a subclass of more than
     one subclass.
     """
-    it = (subcls for subcls
-          in chain(cls.__subclasses__(), cls._abc_registry))
+    try:
+        virtual_subclasses = cls._abc_registry
+    except AttributeError:
+        it = iter(cls.__subclasses__())
+    else:
+        it = chain(cls.__subclasses__(), virtual_subclasses)
     seen = set()
     while True:
         try:
