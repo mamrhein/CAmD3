@@ -14,16 +14,16 @@ import unittest
 from datetime import datetime, timedelta, tzinfo
 from itertools import zip_longest
 from uuid import uuid1
-from pycomba.infrastructure import get_utility, register_utility
-from pycomba.infrastructure.serializer import (Encoder, EncoderFactory,
-                                               Decoder, DecoderFactory)
-from pycomba.infrastructure.serializer.bson import (BSONEncoderFactory,
-                                                    BSONDecoderFactory)
-from pycomba.infrastructure.serializer.json import (JSONEncoderFactory,
-                                                    JSONDecoderFactory)
-from pycomba.infrastructure.serializer.serializer import (Serializer_,
-                                                          Deserializer_,
-                                                          IO_MODE_MAP)
+from pycomba.infrastructure import (
+    get_utility, register_factory, register_utility)
+from pycomba.infrastructure.serializer import (
+    Encoder, EncoderFactory, Decoder, DecoderFactory)
+from pycomba.infrastructure.serializer.bson import (
+    BSONEncoderFactory, BSONDecoderFactory)
+from pycomba.infrastructure.serializer.json import (
+    JSONEncoderFactory, JSONDecoderFactory)
+from pycomba.infrastructure.serializer.serializer import (
+    Serializer_, Deserializer_, IO_MODE_MAP)
 from pycomba.types.decimal import Decimal
 from pycomba.types.quantity.predefined import Mass
 
@@ -34,27 +34,33 @@ from pycomba.types.quantity.predefined import Mass
 
 def setUpModule():
     # register needed components
+
     name = 'bson'
+    # create encoder factory
     factory = BSONEncoderFactory()
+    # register encoder factory as utility
     register_utility(factory, interface=EncoderFactory, name=name)
-    # enc = factory(transformers=[Serializer_.transform])
-    # register_utility(enc, interface=Encoder, name=name)
+    # register encoder built by factory as utility
     register_utility(factory(), interface=Encoder, name=name)
+    # create decoder factory
     factory = BSONDecoderFactory()
+    # register decoder factory as utility
     register_utility(factory, interface=DecoderFactory, name=name)
-    # dec = factory(recreators=[Deserializer_.recreate])
-    # register_utility(dec, interface=Decoder, name=name)
+    # register decoder built by factory as utility
     register_utility(factory(), interface=Decoder, name=name)
+
     name = 'json'
-    factory = JSONEncoderFactory()
-    register_utility(factory, interface=EncoderFactory, name=name)
-    # enc = factory(transformers=[Serializer_.transform])
-    # register_utility(enc, interface=Encoder, name=name)
+    # register encoder factory class as factory
+    register_factory(JSONEncoderFactory, interface=EncoderFactory, name=name)
+    # get encoder factory
+    factory = get_utility(interface=EncoderFactory, name=name)
+    # register encoder built by factory as utility
     register_utility(factory(), interface=Encoder, name=name)
-    factory = JSONDecoderFactory()
-    register_utility(factory, interface=DecoderFactory, name=name)
-    # dec = factory(recreators=[Deserializer_.recreate])
-    # register_utility(dec, interface=Decoder, name=name)
+    # register decoder factory class as factory
+    register_factory(JSONDecoderFactory, interface=DecoderFactory, name=name)
+    # get decoder factory
+    factory = get_utility(interface=DecoderFactory, name=name)
+    # register decoder built by factory as utility
     register_utility(factory(), interface=Decoder, name=name)
 
 
