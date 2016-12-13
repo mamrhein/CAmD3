@@ -53,11 +53,12 @@ class ComponentRegistry:
             interface = sgn.return_type
         else:
             if not issubclass(sgn.return_type, interface):
-                raise TypeError("Given `factory` returns an instances of {}, "
-                                "not an instance of `interface` {}."
-                                .format(sgn.return_type, interface))
+                raise ComponentRegisterError(
+                    "Given `factory` returns an instances of {}, "
+                    "not an instance of `interface` {}."
+                    .format(sgn.return_type, interface))
         if interface is Any:
-            raise TypeError("Interface must not be 'Any'.")
+            raise ComponentRegisterError("Interface must not be 'Any'.")
         try:
             factories = self._factories[(interface, name)]
         except KeyError:
