@@ -43,21 +43,28 @@ class ComponentRegistry:
 
     def register_factory(self, factory: _Factory, interface: type = None,
                          name: str = None) -> None:
-        if interface is None:
+        try:
             sgn = signature(factory)
-            interface = sgn.return_type
-        if interface:
-            try:
-                factories = self._factories[(interface, name)]
-            except KeyError:
-                self._factories[(interface, name)] = [factory]
-            else:
-                if factory not in factories:
-                    factories.append(factory)
-        else:
+        except (AssertionError, ValueError):
             raise ComponentRegisterError("Couldn't determine interface of "
                                          "objects build by '{}'"
                                          .format(factory))
+        if interface is None:
+            interface = sgn.return_type
+        else:
+            if not issubclass(sgn.return_type, interface):
+                raise TypeError("Given `factory` returns an instances of {}, "
+                                "not an instance of `interface` {}."
+                                .format(sgn.return_type, interface))
+        if interface is Any:
+            raise TypeError("Interface must not be 'Any'.")
+        try:
+            factories = self._factories[(interface, name)]
+        except KeyError:
+            self._factories[(interface, name)] = [factory]
+        else:
+            if factory not in factories:
+                factories.append(factory)
 
     def register_utility(self, utility: _Utility,
                          interface: type = None, name: str = None) -> None:
