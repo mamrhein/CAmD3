@@ -71,9 +71,8 @@ def func6(x: int, y: 'kribel'):
 
 class SignatureTest(unittest.TestCase):
 
-    def setUp(self):
-        # Called before the first testfunction is executed
-        pass
+    # def setUp(self):
+    #     pass
 
     def test_constructor(self):
         arg_types = [str, int]
@@ -179,9 +178,8 @@ class SignatureTest(unittest.TestCase):
         self.assertEqual(repr(Signature((), Optional[int], str)),
                          '<Signature (*<Union[int, NoneType]>) -> <str>>')
 
-    def tearDown(self):
-        # Called after the last testfunction was executed
-        pass
+    # def tearDown(self):
+    #     pass
 
 
 if __name__ == '__main__':
