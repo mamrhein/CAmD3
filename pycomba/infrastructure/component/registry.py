@@ -17,17 +17,20 @@
 """Component registry"""
 
 
+# standard library imports
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+# local imports
 from .exceptions import ComponentRegisterError, ComponentLookupError
 from .signature import signature
 from ...gbbs.tools import iter_subclasses
 
 
 # some types
-_FactoryFunc = Callable[[], Any]
-_FactoryDict = Dict[Tuple[type, Optional[str]], List[_FactoryFunc]]
-_UtilityFunc = Callable
-_UtilityDict = Dict[Tuple[type, Optional[str]], List[_UtilityFunc]]
+_Utility = Any
+_UtilityDict = Dict[Tuple[type, Optional[str]], List[_Utility]]
+_Factory = Callable[[], _Utility]
+_FactoryDict = Dict[Tuple[type, Optional[str]], List[_Factory]]
 
 
 class ComponentRegistry:
@@ -38,8 +41,8 @@ class ComponentRegistry:
         self._factories = {}        # type: _FactoryDict
         self._utilities = {}        # type: _UtilityDict
 
-    def register_factory(self, factory: _FactoryFunc,
-                         interface: type = None, name: str = None) -> None:
+    def register_factory(self, factory: _Factory, interface: type = None,
+                         name: str = None) -> None:
         if interface is None:
             sgn = signature(factory)
             interface = sgn.return_type
@@ -56,7 +59,7 @@ class ComponentRegistry:
                                          "objects build by '{}'"
                                          .format(factory))
 
-    def register_utility(self, utility: _UtilityFunc,
+    def register_utility(self, utility: _Utility,
                          interface: type = None, name: str = None) -> None:
         if interface is None:
             if not isinstance(utility, type):
@@ -72,7 +75,7 @@ class ComponentRegistry:
                 utilities.append(utility)
 
     def _lookup_utility(self, interface: type, name: str = None) \
-            -> _UtilityFunc:
+            -> _Utility:
         try:
             return self._utilities[(interface, name)][-1]
         except KeyError:
@@ -85,7 +88,7 @@ class ComponentRegistry:
         raise LookupError
 
     def get_utility(self, interface: type, name: str = None) \
-            -> _UtilityFunc:
+            -> _Utility:
         try:
             return self._lookup_utility(interface, name)
         except LookupError:
@@ -109,7 +112,7 @@ def get_component_registry():
 # helper functions for registration and retrieval of components
 
 
-def register_factory(factory: _FactoryFunc, interface: type = None,
+def register_factory(factory: _Factory, interface: type = None,
                      name: str = None) -> None:
     """Register given `factory` as factory for obejcts that provide the
     given interface."""
@@ -117,14 +120,14 @@ def register_factory(factory: _FactoryFunc, interface: type = None,
     reg.register_factory(factory, interface, name)
 
 
-def register_utility(utility: _UtilityFunc, interface: type = None,
+def register_utility(utility: _Utility, interface: type = None,
                      name: str = None) -> None:
     """Register a utility which provides the given interface."""
     reg = get_component_registry()
     reg.register_utility(utility, interface, name)
 
 
-def get_utility(interface: type, name: str = None) -> _UtilityFunc:
+def get_utility(interface: type, name: str = None) -> _Utility:
     """Retrieve a utility which provides the given interface."""
     reg = get_component_registry()
     return reg.get_utility(interface, name)
