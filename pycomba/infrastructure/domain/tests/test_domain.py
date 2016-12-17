@@ -22,7 +22,9 @@ from pycomba.infrastructure.domain import (Entity,
                                            UUIDGenerator)
 
 
-class TestEntity(Entity):
+# --- Entity ---
+
+class TestEntity1(Entity):
 
     id = Attribute(immutable=True,)
 
@@ -30,18 +32,42 @@ class TestEntity(Entity):
         self.id = id
 
 
-class TestAggregate(AggregateRoot):
+class TestEntity2(Entity):
 
-    def __init__(self, *args, **kwds):
-        pass
+    id = Attribute(immutable=True,)
+
+    def __init__(self, id):
+        self.id = id
 
 
 class EntityTest(unittest.TestCase):
 
-    def testConstructor(self):
+    def test_constructor(self):
         for id in (1, 18, 'a', 'aa'):
-            entity = TestEntity(id)
+            entity = TestEntity1(id)
             self.assertEqual(entity.id, id)
+
+    def test_equality(self):
+        for cls1 in (TestEntity1, TestEntity2):
+            for id1 in (1, 18, 'a', object()):
+                e1 = cls1(id1)
+                for cls2 in (TestEntity1, TestEntity2):
+                    for id2 in (1, 18, 'a', object()):
+                        e2 = cls2(id2)
+                        if cls1 is cls2 and id1 == id2:
+                            self.assertEqual(e1, e2)
+                            self.assertEqual(hash(e1), hash(e2))
+                        else:
+                            self.assertNotEqual(e1, e2)
+                            self.assertNotEqual(hash(e1), hash(e2))
+
+
+# --- AggregateRoot ---
+
+class TestAggregate(AggregateRoot):
+
+    def __init__(self, *args, **kwds):
+        pass
 
 
 class AggregateRootTest(unittest.TestCase):
@@ -50,7 +76,7 @@ class AggregateRootTest(unittest.TestCase):
         # register UUID generator factory
         register_factory(uuid_generator)
 
-    def testConstructor(self):
+    def test_constructor(self):
         nIds = 10
         dict_ = {}
         for id in range(nIds):
@@ -59,6 +85,8 @@ class AggregateRootTest(unittest.TestCase):
             dict_[entity.id] = entity
         self.assertEqual(len(dict_), nIds)
 
+
+# --- ValueObject ---
 
 class VO1(ValueObject):
 
@@ -127,7 +155,7 @@ class VO7(VO4):
 
 class ValueObjectTest(unittest.TestCase):
 
-    def testAttrAccess(self):
+    def test_attr_access(self):
         val1 = VO1()
         self.assertEqual((val1.x, val1.y), (1, 2))
         self.assertRaises(AttributeError, setattr, val1, 'x', 5)
@@ -159,7 +187,7 @@ class ValueObjectTest(unittest.TestCase):
         self.assertRaises(AttributeError, delattr, val5.v4, 's4')
         self.assertRaises(AttributeError, setattr, val5, 'a', '')
 
-    def testState(self):
+    def test_state(self):
         # __getstate__
         val = VO2(17)
         self.assertEqual(val.__getstate__(), (1, 2, 17))
@@ -178,8 +206,9 @@ class ValueObjectTest(unittest.TestCase):
         self.assertNotEqual(v1, v2)
         v1.__setstate__(v2.__getstate__())
         self.assertEqual(v1, v2)
+        self.assertRaises(ValueError, v1.__setstate__, VO6().__getstate__())
 
-    def testEq(self):
+    def test_eq(self):
         self.assertEqual(VO1(), VO1())
         self.assertEqual(VO2(9), VO2(9))
         self.assertNotEqual(VO2(9), VO2(8))
@@ -191,7 +220,7 @@ class ValueObjectTest(unittest.TestCase):
         # same state, but different class:
         self.assertNotEqual(VO4(), VO7())
 
-    def testHash(self):
+    def test_hash(self):
         val = VO5(8)
         self.assertEqual(hash(val), hash((val.__class__, val.__getstate__())))
         # class with __getstate__:
@@ -200,7 +229,7 @@ class ValueObjectTest(unittest.TestCase):
         # same state, but different class:
         self.assertNotEqual(hash(VO4()), hash(VO7()))
 
-    def testCopy(self):
+    def test_copy(self):
         val = VO5(8)
         self.assertTrue(copy(val) is val)
 
