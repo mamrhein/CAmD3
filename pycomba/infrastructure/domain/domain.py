@@ -39,7 +39,7 @@ class Entity(Component):
 
     def __hash__(self) -> int:
         """hash(self)"""
-        return hash(self.__class__, self.id)
+        return hash((self.__class__, self.id))
 
 
 class AggregateRoot(Entity):
