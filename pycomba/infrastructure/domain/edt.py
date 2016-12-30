@@ -28,6 +28,10 @@ from ..component.component import ComponentMeta
 EnumType = TypeVar('EnumType', bound=Enum)
 
 
+# fake class EDT so that it can be used in EDTMeta when creating the real EDT
+EDT = type('EDT', (), {})
+
+
 class EDTMeta(ComponentMeta):
 
     def __new__(metacls, cls_name: str, bases: Tuple[type, ...],
@@ -53,13 +57,14 @@ class EDTMeta(ComponentMeta):
         return cls._instance_map[id]
 
     def __iter__(cls):
-        return (cls._instance_map[id] for id in cls._enum)
+        return iter(cls._instance_map.values())
 
     def __call__(cls, *args, **kwds):
         if cls._sealed:
             raise TypeError("Can't create new members of %r." % cls)
         inst = super().__call__(*args, **kwds)
         cls._instance_map[inst.id] = inst
+        return inst
 
     @property
     def enum(cls) -> EnumMeta:
@@ -86,7 +91,9 @@ class EDT(Entity, metaclass=EDTMeta, enum=Enum):
 
     id = Attribute(immutable=True, doc=Entity.id.__doc__)
 
-    def __init__(self, id: EnumType, *args, **kwds) -> None:
+    def __init__(self, id: EnumType, *args) -> None:
+        enum = self.__class__.enum
+        assert isinstance(id, enum), "'id' must be an instance of %s." % enum
         try:
             self.__class__[id]
         except KeyError:
