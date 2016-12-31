@@ -66,7 +66,7 @@ class JSONEncoderFactory:
     def __call__(self, encoders: EncodeFunctionMap = None,
                  transformers: Iterable[TransformFunction] = None) \
             -> JSONEncoder:
-        """Return a JSON encoder (providing :interface: `IEncoder`)."""
+        """Return a JSON encoder (providing interface :class:`Encoder`)."""
         ext_encoder_map = {Decimal: decimal2json}   # type: EncodeFunctionMap
         if encoders:
             ext_encoder_map.update(encoders)
@@ -83,7 +83,7 @@ class JSONDecoderFactory:
 
     def __call__(self, decoders: DecodeFunctionMap = None,
                  recreators: List[RecreateFunction] = None) -> JSONDecoder:
-        """Return a JSON decoder (providing :interface: `IDecoder`)."""
+        """Return a JSON decoder (providing interface :class:`Decoder`)."""
         str_decoders = None
         if decoders:
             if len(decoders) == 1 and str in decoders:
