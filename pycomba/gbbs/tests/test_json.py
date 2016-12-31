@@ -178,6 +178,7 @@ class EnhancedEncoderTest(unittest.TestCase):
                                      '{"f": "3/4", "set": "<1, 2, 3>"}'))
         # no encoder and no transformer
         self.assertRaises(ValueError, encoder.encode, object(), buf)
+        self.assertRaises(ValueError, encoder.encode, int, buf)
 
 
 class FromDict(object):
