@@ -48,6 +48,8 @@ class StateAdapter:
     """
 
     def __init__(self, context: object) -> None:
+        if isinstance(context, type):
+            raise TypeError("Can't adapt a class (i.e. instance of type).")
         self._context = context
 
     def get_state(self) -> Any:

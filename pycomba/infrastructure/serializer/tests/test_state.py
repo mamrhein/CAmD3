@@ -152,6 +152,11 @@ class StateAdapterTest(unittest.TestCase):
         self.assertRaises(TypeError, State[dt].set_state, dt)
         self.assertRaises(TypeError, State[5].set_state, 5)
 
+    def test_failed_adaptation(self):
+        self.assertRaises(TypeError, State.adapt, type)
+        self.assertRaises(TypeError, State.adapt, int)
+        self.assertRaises(TypeError, State.adapt, Name)
+
 
 if __name__ == '__main__':
     unittest.main()
