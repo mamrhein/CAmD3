@@ -38,6 +38,8 @@ class Serializer_:
     @staticmethod
     def transform(obj: object) -> Optional[MutableMapping]:
         """Transform `obj` into a serializable form."""
+        if isinstance(obj, type):
+            return None                 # can't transform a class
         try:
             reduced_obj = obj.__reduce__()
         except (AttributeError, TypeError):
@@ -50,8 +52,9 @@ class Serializer_:
                 full_cls_name = '.'.join((cls.__module__, cls.__name__))
                 return {'__class__': full_cls_name,
                         '__clsargs__': clsargs}
-        state = State[obj].get_state()
-        if state is None:
+        try:
+            state = State[obj].get_state()
+        except TypeError:
             # unable to retrieve state
             return None
         cls = type(obj)

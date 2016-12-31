@@ -28,10 +28,6 @@ from pycomba.types.decimal import Decimal
 from pycomba.types.quantity.predefined import Mass
 
 
-#TODO: write more tests
-#TODO: write tests for serializing quantities
-
-
 def setUpModule():
     # register needed components
 
@@ -200,6 +196,11 @@ class SerializerTest:
                          hans.__getstate__()[:3])
         self.assertEqual(state[3], {u'__class__': u'quantity.r',
                                     u'__clsargs__': [u'78.2 kg']})
+
+    def test_exceptions(self):
+        format = self.format
+        serializer = Serializer_(format)
+        self.assertRaises(ValueError, serializer.dumps, int)
 
 
 class DeserializerTest:
