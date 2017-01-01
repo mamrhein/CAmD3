@@ -31,6 +31,12 @@ class TestDecimal(unittest.TestCase):
         self.assertEqual(d, bson2decimal(bval[1:]))
         self.assertRaises(AssertionError, decimal2bson, 7)
         self.assertRaises(OverflowError, decimal2bson, Decimal('1E-129'))
+        d = Decimal(5)
+        code, buf = decimal2bson(d)
+        bval = buf[4:]
+        i = bson2decimal(bval[1:])
+        self.assertEqual(i, 5)
+        self.assertIsInstance(i, int)
 
 
 class TestBSONEncoderFactory(unittest.TestCase):
