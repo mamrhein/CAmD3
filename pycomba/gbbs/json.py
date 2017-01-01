@@ -203,7 +203,7 @@ class JSONDecoder:
         else:
             self._str_decoders = _str_decoders
         self._recreators = recreators or []
-        self._jsonDecoder = json.JSONDecoder(object_hook=self._hook,
+        self._jsonDecoder = json.JSONDecoder(object_hook=self.obj_hook,
                                              parse_float=number)
 
     def _decode_str(self, val: str) -> object:
@@ -213,18 +213,21 @@ class JSONDecoder:
                 return newVal
         return None
 
-    def _hook(self, dict_: Dict[str, Union[object, List]]) -> object:
+    def _decode_list_items(self, list_: List) -> None:
+        for idx, item in enumerate(list_):
+            if isinstance(item, str):
+                newVal = self._decode_str(item)
+                if newVal is not None:
+                    list_[idx] = newVal
+
+    def obj_hook(self, dict_: Dict[str, Union[object, List]]) -> object:
         for key, val in dict_.items():
             if isinstance(val, str):
                 newVal = self._decode_str(val)
                 if newVal is not None:
                     dict_[key] = newVal
             elif isinstance(val, list):
-                for idx, item in enumerate(val):
-                    if isinstance(item, str):
-                        newVal = self._decode_str(item)
-                        if newVal is not None:
-                            val[idx] = newVal
+                self._decode_list_items(val)
         for recreator in self._recreators:
             recr_obj = recreator(dict_)
             if recr_obj:
@@ -233,7 +236,10 @@ class JSONDecoder:
 
     def decode(self, stream: CharStream) -> object:
         """Read JSON document from stream and return reconstructed object."""
-        return self._jsonDecoder.decode(stream.read())
+        obj = self._jsonDecoder.decode(stream.read())
+        if isinstance(obj, list):
+            self._decode_list_items(obj)
+        return obj
 
 
 def dump(obj: object, stream: CharStream) -> int:

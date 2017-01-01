@@ -119,6 +119,16 @@ class JSONTest(unittest.TestCase):
         # test fall-through
         self.assertIsNone(json.json2uuid('a0b1e37240ae11e4ae2aac7ba147af6'))
 
+    def test_list(self):
+        id = uuid1()
+        dt = datetime(2014, 1, 2, 22, 17, 47)
+        d = dt.date()
+        t = dt.time()
+        obj = ['a', 17, id, dt, d, t, {'a': 1, 'b': 2}]
+        json_repr = json.dumps(obj)
+        robj = json.loads(json_repr)
+        self.assertEqual(obj, robj)
+
     def test_dict(self):
         id = uuid1()
         dt = datetime(2014, 1, 2, 22, 17, 47)
