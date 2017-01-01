@@ -138,7 +138,7 @@ class SerializerTest:
 
     """Mix-in for testing serializers."""
 
-    def testStdTypes(self):
+    def test_std_types(self):
         id = uuid1()
         dt = datetime(2014, 1, 2, 22, 17, 47, tzinfo=cest)
         obj = {'id': id,
@@ -174,7 +174,7 @@ class SerializerTest:
         for key in emb:
             self.assertEqual(emb[key], remb[key])
 
-    def testNestedTypes(self):
+    def test_nested_types(self):
         name = Name(['Hans', 'August'], 'Bronner')
         addr = Address('Klubweg 35', 29338, 'Posemuckel')
         id = uuid1()
@@ -201,13 +201,14 @@ class SerializerTest:
         format = self.format
         serializer = Serializer_(format)
         self.assertRaises(ValueError, serializer.dumps, int)
+        self.assertRaises(ValueError, serializer.dumps, lambda x: x)
 
 
 class DeserializerTest:
 
     """Mix-in for testing deserializers."""
 
-    def testStdTypes(self):
+    def test_std_types(self):
         id = uuid1()
         dt = datetime(2014, 1, 2, 22, 17, 47, tzinfo=cest)
         obj = {'id': id,
@@ -224,10 +225,10 @@ class DeserializerTest:
                                 'list': [1, 2, dt]}}
         format = self.format
         serializer = Serializer_(format)
-        buf = create_buffer(serializer.mode)
+        deserializer = Deserializer_(format)
+        buf = create_buffer(deserializer.mode)
         serializer.dump(obj, buf)
         buf.seek(0)
-        deserializer = Deserializer_(format)
         robj = deserializer.load(buf)
         self.assertEqual(len(obj), len(robj))
         self.assertEqual(obj['id'], robj['id'])
@@ -243,17 +244,28 @@ class DeserializerTest:
         for key in emb:
             self.assertEqual(emb[key], remb[key])
 
-    def testNestedTypes(self):
+    def test_simple_type(self):
+        name = Name(['Hans', 'August'], 'Bronner')
+        format = self.format
+        serializer = Serializer_(format)
+        deserializer = Deserializer_(format)
+        buf = create_buffer(deserializer.mode)
+        serializer.dump(name, buf)
+        buf.seek(0)
+        name2 = deserializer.load(buf)
+        self.assertEqual(name, name2)
+
+    def test_nested_types(self):
         name = Name(['Hans', 'August'], 'Bronner')
         addr = Address('Klubweg 35', 29338, 'Posemuckel')
         id = uuid1()
         hans = Person(id, name, addr, Mass('78.2 kg'))
         format = self.format
         serializer = Serializer_(format)
-        buf = create_buffer(serializer.mode)
+        deserializer = Deserializer_(format)
+        buf = create_buffer(deserializer.mode)
         serializer.dump(hans, buf)
         buf.seek(0)
-        deserializer = Deserializer_(format)
         hans2 = deserializer.load(buf)
         self.assertEqual(hans, hans2)
 
@@ -262,6 +274,13 @@ class BSONSerializerTest(unittest.TestCase, SerializerTest):
 
     def setUp(self):
         self.format = 'bson'
+
+    def test_list(self):
+        format = self.format
+        serializer = Serializer_(format)
+        obj = ['a', 5, uuid1()]
+        # BSON cannot encode a list as primary document
+        self.assertRaises(TypeError, serializer.dumps, obj)
 
 
 class BSONDeserializerTest(unittest.TestCase, DeserializerTest):
@@ -275,11 +294,31 @@ class JSONSerializerTest(unittest.TestCase, SerializerTest):
     def setUp(self):
         self.format = 'json'
 
+    def test_list(self):
+        format = self.format
+        serializer = Serializer_(format)
+        obj = ['a', 5, uuid1()]
+        obj_repr = serializer.dumps(obj)
+        buf = create_buffer(serializer.mode)
+        buf.write(obj_repr)
+        buf.seek(0)
+        decoder = get_utility(Decoder, format)
+        recr_obj = decoder.decode(buf)
+        self.assertEqual(obj, recr_obj)
+
 
 class JSONDeserializerTest(unittest.TestCase, DeserializerTest):
 
     def setUp(self):
         self.format = 'json'
+
+    def test_list(self):
+        format = self.format
+        deserializer = Deserializer_(format)
+        id = uuid1()
+        obj_repr = '["a", 5, "%s"]' % id
+        obj = deserializer.loads(obj_repr)
+        self.assertEqual(obj, ['a', 5, id])
 
 
 if __name__ == '__main__':
