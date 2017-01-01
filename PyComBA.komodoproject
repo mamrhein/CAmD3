@@ -39,7 +39,7 @@
   <boolean id="donotask_treat_large_documents_as_text">0</boolean>
   <boolean id="editUseLinting">1</boolean>
   <string relative="path" id="import_dirname"></string>
-  <string id="import_exclude_matches">*.*~;*.bak;tmp;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;*%25*;tmp*.html;.DS_Store;.hg;.hgignore;.coverage;__pycache__</string>
+  <string id="import_exclude_matches">*.*~;*.bak;tmp;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;*%25*;tmp*.html;.DS_Store;.hg;.hgignore;.coverage;*.orig;__pycache__</string>
   <string id="import_include_matches"></string>
   <string id="jshintOptions"></string>
   <string id="jshint_linter_chooser">default</string>
