@@ -36,6 +36,26 @@ class CEST(tzinfo):
 cest = CEST()
 
 
+class DecimalTest(unittest.TestCase):
+
+    def test_decimal(self):
+        d = Decimal('-16.7390')
+        code, buf = bson.decimal2bson(d)
+        self.assertEqual(code, bson.BSON_BINARY)
+        bval = buf[4:]
+        subtype = bval[:1]
+        self.assertEqual(subtype, bson.BSON_BINARY_CUSTOM)
+        self.assertEqual(d, bson.bson2decimal(bval[1:]))
+        self.assertRaises(AssertionError, bson.decimal2bson, 7)
+        self.assertRaises(OverflowError, bson.decimal2bson, Decimal('1E-129'))
+        d = Decimal(5)
+        code, buf = bson.decimal2bson(d)
+        bval = buf[4:]
+        i = bson.bson2decimal(bval[1:])
+        self.assertEqual(i, 5)
+        self.assertIsInstance(i, int)
+
+
 class BSONTest(unittest.TestCase):
 
     def test_obj(self):
@@ -69,6 +89,28 @@ class BSONTest(unittest.TestCase):
         for key in emb:
             self.assertEqual(emb[key], remb[key])
 
+    def test_list(self):
+        # BSON cannot encode a list as primary document
+        self.assertRaises(TypeError, bson.dumps, ['a', 5, uuid1()])
+
+    def test_exceptions(self):
+        self.assertRaises(ValueError, bson.dumps, int)
+        self.assertRaises(ValueError, bson.dumps, lambda x: x)
+        bson_repr = bson.dumps({"id": uuid1()})
+        # test illegal BSON documents
+        bson_doc = bytearray(bson_repr)
+        # trailing byte != \x00
+        bson_doc[-1] = 57
+        self.assertRaises(ValueError, bson.loads, bson_doc)
+        # unknown BSON type code
+        bson_doc = bytearray(bson_repr)
+        bson_doc[4] = 57
+        self.assertRaises(ValueError, bson.loads, bson_doc)
+        # unknown BSON binary subtype code
+        bson_doc = bytearray(bson_repr)
+        bson_doc[12] = 57
+        self.assertRaises(ValueError, bson.loads, bson_doc)
+
 
 def bson2fraction(bval):
     """Decode BSON Binary / Custom as Fraction."""
@@ -95,7 +137,7 @@ class EnhancedInterfaceTest(unittest.TestCase):
 
         def transform_set(obj):
             if isinstance(obj, set):
-                return list(obj)
+                return dict((('@%i' % i, e) for i, e in enumerate(obj)))
             return None
 
         encoders = {Fraction: fraction2bson}
@@ -108,14 +150,14 @@ class EnhancedInterfaceTest(unittest.TestCase):
             return Fraction(numerator, denominator)
 
         def recreate_set(dict_):
-            set_ = dict_['set']
-            dict_['set'] = set(set_)
+            if '@0' in dict_:
+                return set(dict_.values())
 
         decoders = {bson.BSON_BINARY + bson.BSON_BINARY_CUSTOM: bson2fraction}
         self.decoder = bson.BSONDecoder(decoders=decoders,
                                         recreators=[recreate_set])
 
-    def testObjectConversion(self):
+    def test_obj(self):
         doc = self.doc
         buf = BytesIO()
         encoder = self.encoder
