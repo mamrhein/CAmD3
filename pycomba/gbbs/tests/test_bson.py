@@ -38,7 +38,7 @@ cest = CEST()
 
 class BSONTest(unittest.TestCase):
 
-    def testObjectConversion(self):
+    def test_obj(self):
         id = uuid1()
         dt = datetime(2014, 1, 2, 22, 17, 47, tzinfo=cest)
         obj = {'id': id,
@@ -53,8 +53,8 @@ class BSONTest(unittest.TestCase):
                                 'bin': b'\x00\x03',
                                 'None': None,
                                 'list': [1, 2]}}
-        bsonRepr = bson.dumps(obj)
-        robj = bson.loads(bsonRepr)
+        bson_repr = bson.dumps(obj)
+        robj = bson.loads(bson_repr)
         self.assertEqual(len(obj), len(robj))
         self.assertEqual(obj['id'], robj['id'])
         self.assertEqual(obj['dt'], robj['dt'])
