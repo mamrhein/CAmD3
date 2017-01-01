@@ -237,6 +237,8 @@ class BSONEncoder:
 
     def encode(self, obj: object, stream: ByteStream) -> int:
         """Encode obj as BSON document and write it to stream."""
+        if isinstance(obj, (list, tuple)):
+            raise TypeError("BSON array must be embedded in a document.")
         code, chunk = self._encode_obj(obj)
         return stream.write(chunk)
 
