@@ -53,7 +53,7 @@ cest = CEST()
 
 class JSONTest(unittest.TestCase):
 
-    def testDateTime(self):
+    def test_datetime(self):
         # naive datetime
         dt = datetime.now().replace(microsecond=0)  # microseconds discarded
         fdt = format(dt, json.NAIVE_DATETIME_FORMAT)
@@ -103,14 +103,14 @@ class JSONTest(unittest.TestCase):
         self.assertIsNone(json.json2time(fdt))
         self.assertIsNone(json.json2time(fd))
 
-    def testDecimal(self):
+    def test_decimal(self):
         dec = Decimal('3.9')
         # we have to use repr here because of work around (see json.py):
         self.assertEqual(str(dec), repr(json.decimal2json(dec)))
         dec = Decimal('-1234.567890')
         self.assertEqual(str(dec), repr(json.decimal2json(dec)))
 
-    def testUUID(self):
+    def test_uuid(self):
         id = uuid1()
         self.assertEqual(str(id), json.uuid2json(id))
         rid = json.json2uuid(json.uuid2json(id))
@@ -119,7 +119,7 @@ class JSONTest(unittest.TestCase):
         # test fall-through
         self.assertIsNone(json.json2uuid('a0b1e37240ae11e4ae2aac7ba147af6'))
 
-    def testObjectConversion(self):
+    def test_dict(self):
         id = uuid1()
         dt = datetime(2014, 1, 2, 22, 17, 47)
         d = dt.date()
@@ -136,8 +136,8 @@ class JSONTest(unittest.TestCase):
                                 'bin': '\x00\x03',
                                 'None': None,
                                 'list': [1, 2, t]}}
-        jsonRepr = json.dumps(obj)
-        robj = json.loads(jsonRepr)
+        json_repr = json.dumps(obj)
+        robj = json.loads(json_repr)
         self.assertEqual(len(obj), len(robj))
         self.assertEqual(obj['id'], robj['id'])
         self.assertEqual(obj['dt'], robj['dt'])
@@ -167,15 +167,15 @@ class EnhancedEncoderTest(unittest.TestCase):
         self.encoder = json.JSONEncoder(encoders=encoders,
                                         transformers=[transform_set])
 
-    def testEncode(self):
+    def test_encode(self):
         encoder = self.encoder
         doc = {'set': set((1, 2, 3)),
                'f': Fraction(3, 4)}
         buf = StringIO()
         encoder.encode(doc, buf)
-        jsonRepr = buf.getvalue()
-        self.assertTrue(jsonRepr in ('{"set": "<1, 2, 3>", "f": "3/4"}',
-                                     '{"f": "3/4", "set": "<1, 2, 3>"}'))
+        json_repr = buf.getvalue()
+        self.assertTrue(json_repr in ('{"set": "<1, 2, 3>", "f": "3/4"}',
+                                      '{"f": "3/4", "set": "<1, 2, 3>"}'))
         # no encoder and no transformer
         self.assertRaises(ValueError, encoder.encode, object(), buf)
         self.assertRaises(ValueError, encoder.encode, int, buf)
@@ -221,12 +221,12 @@ class EnhancedDecoderTest(unittest.TestCase):
                                                       decode_set],
                                         recreators=[FromDict])
 
-    def testDecode(self):
+    def test_decode(self):
         decoder = self.decoder
-        jsonRepr = '''{"set": "<1, 2, 3>",
+        json_repr = '''{"set": "<1, 2, 3>",
                        "f": "3/4",
                        "d": {"e1": 1, "ed": {}}}'''
-        buf = StringIO(jsonRepr)
+        buf = StringIO(json_repr)
         obj = decoder.decode(buf)
         self.assertTrue(isinstance(obj, FromDict))
         self.assertTrue(isinstance(obj.d, FromDict))
