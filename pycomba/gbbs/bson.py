@@ -119,11 +119,11 @@ class UTC(tzinfo):
     def utcoffset(self, dt: datetime) -> Optional[timedelta]:
         return timedelta(0)
 
-    def tzname(self, dt: datetime) -> str:
-        return str("UTC")
-
-    def dst(self, dt: datetime) -> Optional[timedelta]:
-        return timedelta(0)
+    # def tzname(self, dt: datetime) -> str:
+    #     return str("UTC")
+    #
+    # def dst(self, dt: datetime) -> Optional[timedelta]:
+    #     return timedelta(0)
 
 
 def bool2bson(val: bool) -> Tuple[bytes, bytes]:
@@ -372,17 +372,16 @@ class BSONDecoder:
 
     def _get_parser(self, code: bytes) \
             -> Callable[['BSONDecoder', bytes], Tuple[bytes, bytes]]:
-        return self._parser_map[code]
+        try:
+            return self._parser_map[code]
+        except KeyError:
+            raise ValueError("BSON element '%s' not supported." % repr(code))
 
     def _get_decoder(self, code: bytes) -> DecodeFunction:
         try:
             return self._decoder_map[code]
         except KeyError:
-            try:
-                return _dflt_decoder_map[code]      # type: DecodeFunction
-            except KeyError:
-                raise ValueError("BSON element '%s' not supported." %
-                                 repr(code))
+            return _dflt_decoder_map[code]      # type: DecodeFunction
 
     def decode(self, stream: ByteStream) -> object:
         """Read BSON document from stream and return reconstructed object."""
@@ -410,9 +409,8 @@ class BSONDecoder:
         try:
             decode = self._get_decoder(code)
         except:
-            # no decoder registered for this subtype, so just return the bytes
-            # TODO: raise exception instead???
-            return buf[1:]
+            # no decoder registered for this subtype
+            raise ValueError("BSON element '%s' not supported." % repr(code))
         else:
             return decode(buf[1:])
 
