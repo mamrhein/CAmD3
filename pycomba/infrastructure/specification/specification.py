@@ -34,8 +34,7 @@ class Specification(Component):
 
     @abstractmethod
     def __init__(self) -> None:
-        """Initialize `Specification` instance."""
-        return NotImplemented
+        """Initialize :class:`Specification` instance."""
 
     @property
     def interface(self) -> type:
@@ -45,7 +44,6 @@ class Specification(Component):
     @abstractmethod
     def is_satisfied_by(self, candidate: Any) -> bool:
         """Return True if `candidate` satisfies the specification."""
-        return NotImplemented
 
     # for convenience:
     def __call__(self, candidate: Any) -> bool:
@@ -54,12 +52,12 @@ class Specification(Component):
 
     # should be overwritten in subclasses for optimization
     def _negate(self) -> 'Specification':
-        return NegatedSpecification(self)
+        """~self"""
+        return NegatedSpecification(self)       # pragma: no cover
 
     @abstractmethod
     def __eq__(self, other: Any) -> bool:
         """self == other"""
-        return NotImplemented
 
     def __and__(self, other: 'Specification') -> 'Specification':
         """self & other => specification which is the conjunction of self
@@ -74,7 +72,6 @@ class Specification(Component):
     @abstractmethod
     def __hash__(self) -> int:
         """hash(self)"""
-        return NotImplemented
 
     def __invert__(self) -> 'Specification':
         """~self => specification which is the negation of self."""
@@ -114,7 +111,7 @@ class NegatedSpecification(Specification):
         return not self._spec(candidate)
 
     def _negate(self) -> Specification:
-        """Return negation of self."""
+        """~self"""
         return self._spec
 
     def _term(self, candidate_name: str) -> str:
@@ -171,7 +168,7 @@ class CompositeSpecification(Specification):
                                            for spec in self._specs))
 
     def _negate(self) -> Specification:
-        """Return negation of self."""
+        """~self"""
         return self.__class__(self._map_op2neg[self._op],
                               *(~spec for spec in self._specs))
 
@@ -243,7 +240,7 @@ class ValueSpecification(BaseSpecification):
         return False
 
     def _negate(self) -> Specification:
-        """Return negation of self."""
+        """~self"""
         try:
             invOp = self._mapOp2Invers[self._operator]
         except KeyError:
@@ -258,24 +255,24 @@ class ValueSpecification(BaseSpecification):
 
 class ValueSpecificationFactory(Component):
 
-    """Create an object that provides interface `Specification`."""
+    """Factory for objects that provide interface :class:`Specification`."""
 
     def __call__(interface: type, attr_name: str,
                  operator: Callable[[Any, Any], bool], value: Any) \
             -> ValueSpecification:
-        """Create a Specification for objects that implement the given
+        """Create a specification for objects that implement the given
         interface, satisfied if operator(attribute, value) returns True."""
 
 
 class IntervalSpecification(BaseSpecification):
 
-    """Create an object that provides ISpecification."""
+    """Create an object that provides interface :class:`Specification`."""
 
     __slots__ = ('_attr_name', '_attr', '_ival')
 
     def __init__(self, interface: type, attr_name: str,
                  ival: Union[Interval, Tuple[Any, Any]]) -> None:
-        """Create a Specification for objects that implement the given
+        """Create a specification for objects that implement the given
         interface, satisfied if attribute in ival.
 
         ival must be given as Interval instance or as a tuple of two values.
@@ -312,7 +309,7 @@ class IntervalSpecification(BaseSpecification):
         return False
 
     def _negate(self) -> Specification:
-        """Return negation of self."""
+        """~self"""
         specs = []
         adjacent_limit = self._ival.lower_limit.adjacent_limit()
         if adjacent_limit:
@@ -338,10 +335,10 @@ class IntervalSpecification(BaseSpecification):
 
 class IntervalSpecificationFactory(Component):
 
-    """Create an object that provides interface `Specification`."""
+    """Factory for objects that provide interface :class:`Specification`."""
 
     def __call__(interface: type, attr_name: str,
                  ival: Union[Interval, Tuple[Any, Any]]) \
             -> IntervalSpecification:
-        """Create a Specification for objects that implement the given
+        """Create a specification for objects that implement the given
         interface, satisfied if attribute in ival."""
