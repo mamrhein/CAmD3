@@ -70,13 +70,13 @@ class Serializer_:
         """Create serializer that uses the encoder registered for `format`."""
         try:
             encoder_factory = get_utility(EncoderFactory, name=format)
-        except ComponentLookupError:
+        except ComponentLookupError:                # pragma: no cover
             pass
         else:
             self._encoder = encoder_factory(transformers=[self.transform])
             return
         raise ValueError("No encoder factory registered for format '%s'."
-                         % format)
+                         % format)                  # pragma: no cover
 
     @property
     def mode(self) -> str:
@@ -130,13 +130,13 @@ class Deserializer_:
         """
         try:
             decoder_factory = get_utility(DecoderFactory, format)
-        except ComponentLookupError:
+        except ComponentLookupError:                # pragma: no cover
             pass
         else:
             self._decoder = decoder_factory(recreators=[self.recreate])
             return
         raise ValueError("No decoder factory registered for format '%s'."
-                         % format)
+                         % format)                  # pragma: no cover
 
     @property
     def mode(self) -> str:
