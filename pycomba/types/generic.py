@@ -27,12 +27,10 @@ class Stream(Generic[AnyStr]):
     @abstractmethod
     def read(self, n: int = -1) -> AnyStr:
         """Read at most `n` characters from stream."""
-        pass
 
     @abstractmethod
     def write(self, s: AnyStr) -> int:
         """Write `s` to stream."""
-        pass
 
 
 ByteStream = Stream[bytes]
