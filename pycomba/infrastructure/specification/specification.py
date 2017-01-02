@@ -257,7 +257,7 @@ class ValueSpecificationFactory(Component):
 
     """Factory for objects that provide interface :class:`Specification`."""
 
-    def __call__(interface: type, attr_name: str,
+    def __call__(self, interface: type, attr_name: str,
                  operator: Callable[[Any, Any], bool], value: Any) \
             -> ValueSpecification:
         """Create a specification for objects that implement the given
@@ -337,7 +337,7 @@ class IntervalSpecificationFactory(Component):
 
     """Factory for objects that provide interface :class:`Specification`."""
 
-    def __call__(interface: type, attr_name: str,
+    def __call__(self, interface: type, attr_name: str,
                  ival: Union[Interval, Tuple[Any, Any]]) \
             -> IntervalSpecification:
         """Create a specification for objects that implement the given
