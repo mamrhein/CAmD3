@@ -14,18 +14,103 @@
 import unittest
 from copy import copy, deepcopy
 from operator import delitem, setitem
-from pycomba.types.interval import (Interval, InvalidInterval,
+from sys import maxsize
+from pycomba.types.interval import (Inf, NegInf, Interval, InvalidInterval,
                                     LowerClosedInterval, UpperClosedInterval,
                                     LowerOpenInterval, UpperOpenInterval,
                                     ClosedInterval, OpenBoundedInterval,
-                                    ChainableInterval,
+                                    ChainableInterval, Limit, InfiniteLimit,
                                     LowerInfiniteLimit, UpperInfiniteLimit,
                                     LowerClosedLimit, LowerOpenLimit,
                                     UpperClosedLimit, UpperOpenLimit,
-                                    IntervalChain, IntervalMapping)
+                                    IntervalChain, EmptyIntervalChain,
+                                    IntervalMapping)
 
 
-#TODO: write more tests
+class InfinityTests(unittest.TestCase):
+
+    def test_infinity_values(self):
+        inf = Inf()
+        neg_inf = NegInf()
+        # do we have singletons?
+        self.assertIs(inf, Inf())
+        self.assertIs(neg_inf, NegInf())
+        # there's nothing greater than Inf()
+        self.assertTrue(inf == Inf())
+        self.assertTrue(inf >= Inf())
+        for val in (neg_inf, maxsize, 'zzz', object()):
+            self.assertFalse(val >= inf)
+        # there's nothing smaller than NegInf()
+        self.assertTrue(neg_inf == NegInf())
+        self.assertTrue(neg_inf <= NegInf())
+        for val in (inf, maxsize, 'zzz', object()):
+            self.assertFalse(val <= neg_inf)
+
+
+class LimitTests(unittest.TestCase):
+
+    def test_infinite_limits(self):
+        self.assertRaises(AssertionError, InfiniteLimit, '')
+        lower_inf = LowerInfiniteLimit()
+        upper_inf = UpperInfiniteLimit()
+        # infinite limits are singletons
+        self.assertIs(lower_inf, InfiniteLimit(True))
+        self.assertIs(upper_inf, InfiniteLimit(False))
+        # infinite limits have 'Inf' values (which are singletons)
+        self.assertIs(lower_inf.value, NegInf())
+        self.assertIs(upper_inf.value, Inf())
+        # infinite limits are always open
+        self.assertFalse(lower_inf.is_closed())
+        self.assertFalse(upper_inf.is_closed())
+        # infinite limits have no adjacent limit
+        self.assertIs(lower_inf.adjacent_limit(), None)
+        self.assertIs(upper_inf.adjacent_limit(), None)
+        # only NegInf() is smaller than LowerInfiniteLimit()
+        self.assertTrue(NegInf() < lower_inf)
+        self.assertTrue(NegInf() <= lower_inf)
+        for val in (upper_inf, -maxsize, 'zzz', object()):
+            self.assertFalse(val <= lower_inf)
+        # only Inf() is greater than UpperInfiniteLimit()
+        self.assertTrue(Inf() > upper_inf)
+        self.assertTrue(Inf() >= upper_inf)
+        for val in (lower_inf, maxsize, 'zzz', object()):
+            self.assertFalse(val >= upper_inf)
+
+    def test_limit_ops(self):
+        lower_closed_limit = LowerClosedLimit(0)
+        upper_closed_limit = UpperClosedLimit(0)
+        lower_open_limit = LowerOpenLimit(0)
+        upper_open_limit = UpperOpenLimit(0)
+        # limits are immutable
+        self.assertIs(copy(lower_closed_limit), lower_closed_limit)
+        self.assertIs(deepcopy(lower_closed_limit), lower_closed_limit)
+        # if values are equal: upper+open < closed < lower+open ...
+        self.assertTrue(upper_open_limit < upper_closed_limit ==
+                        lower_closed_limit < lower_open_limit)
+        # ... otherwise limits compare like their values
+        self.assertTrue(UpperOpenLimit(7) > UpperClosedLimit(6) >
+                        LowerClosedLimit(5) > LowerOpenLimit(4))
+        self.assertTrue(UpperOpenLimit('a') < UpperClosedLimit('b') <
+                        LowerClosedLimit('c') < LowerOpenLimit('d'))
+        # compare limits to values
+        self.assertTrue(lower_closed_limit == 0)
+        self.assertTrue(upper_closed_limit == 0)
+        self.assertFalse(lower_closed_limit == '0')
+        self.assertFalse(lower_open_limit == 0)
+        self.assertFalse(upper_open_limit == 0)
+        #self.assertRaises(TypeError, )
+        # two limits are adjacent when they are not equal and there is no
+        # value between them
+        self.assertEqual(lower_closed_limit.adjacent_limit(),
+                         upper_open_limit)
+        self.assertEqual(upper_closed_limit.adjacent_limit(),
+                         lower_open_limit)
+        self.assertEqual(lower_open_limit.adjacent_limit(),
+                         upper_closed_limit)
+        self.assertEqual(upper_open_limit.adjacent_limit(),
+                         lower_closed_limit)
+        self.assertTrue(lower_closed_limit.is_adjacent(upper_open_limit))
+        self.assertTrue(upper_open_limit.is_adjacent(lower_closed_limit))
 
 
 class IntervalTests(unittest.TestCase):
@@ -67,6 +152,66 @@ class IntervalTests(unittest.TestCase):
         # lower > upper
         upper_limit = UpperOpenLimit(0)
         self.assertRaises(InvalidInterval, Interval, upper_limit, lower_limit)
+
+    def test_properties(self):
+        lower_limit = LowerClosedLimit(0)
+        upper_limit = UpperClosedLimit(1)
+        # closed interval
+        ival = Interval(lower_limit, upper_limit)
+        self.assertTrue(ival.is_lower_bounded())
+        self.assertTrue(ival.is_upper_bounded())
+        self.assertTrue(ival.is_bounded())
+        self.assertFalse(ival.is_lower_unbounded())
+        self.assertFalse(ival.is_upper_unbounded())
+        self.assertFalse(ival.is_unbounded())
+        self.assertTrue(ival.is_lower_closed())
+        self.assertTrue(ival.is_upper_closed())
+        self.assertTrue(ival.is_closed())
+        self.assertFalse(ival.is_lower_open())
+        self.assertFalse(ival.is_upper_open())
+        self.assertFalse(ival.is_open())
+        # upper open interval
+        ival = Interval(lower_limit=lower_limit)
+        self.assertTrue(ival.is_lower_bounded())
+        self.assertFalse(ival.is_upper_bounded())
+        self.assertFalse(ival.is_bounded())
+        self.assertFalse(ival.is_lower_unbounded())
+        self.assertTrue(ival.is_upper_unbounded())
+        self.assertTrue(ival.is_unbounded())
+        self.assertTrue(ival.is_lower_closed())
+        self.assertFalse(ival.is_upper_closed())
+        self.assertFalse(ival.is_closed())
+        self.assertFalse(ival.is_lower_open())
+        self.assertTrue(ival.is_upper_open())
+        self.assertTrue(ival.is_open())
+        # lower open interval
+        ival = Interval(upper_limit=upper_limit)
+        self.assertFalse(ival.is_lower_bounded())
+        self.assertTrue(ival.is_upper_bounded())
+        self.assertFalse(ival.is_bounded())
+        self.assertTrue(ival.is_lower_unbounded())
+        self.assertFalse(ival.is_upper_unbounded())
+        self.assertTrue(ival.is_unbounded())
+        self.assertFalse(ival.is_lower_closed())
+        self.assertTrue(ival.is_upper_closed())
+        self.assertFalse(ival.is_closed())
+        self.assertTrue(ival.is_lower_open())
+        self.assertFalse(ival.is_upper_open())
+        self.assertTrue(ival.is_open())
+        # unbounded interval
+        ival = Interval()
+        self.assertFalse(ival.is_lower_bounded())
+        self.assertFalse(ival.is_upper_bounded())
+        self.assertFalse(ival.is_bounded())
+        self.assertTrue(ival.is_lower_unbounded())
+        self.assertTrue(ival.is_upper_unbounded())
+        self.assertTrue(ival.is_unbounded())
+        self.assertFalse(ival.is_lower_closed())
+        self.assertFalse(ival.is_upper_closed())
+        self.assertFalse(ival.is_closed())
+        self.assertTrue(ival.is_lower_open())
+        self.assertTrue(ival.is_upper_open())
+        self.assertTrue(ival.is_open())
 
     def test_hash(self):
         lower_limit = LowerClosedLimit(0)
@@ -114,8 +259,14 @@ class IntervalTests(unittest.TestCase):
         self.assertTrue(m != lu)
         # lt
         self.assertTrue(lu < lma < lmo < s2 < m < s3 < s1 < umo < uma < uu)
+        # le
+        self.assertTrue(
+            lu <= lma <= lmo <= s2 <= m <= s3 <= s1 <= umo <= uma <= uu)
         # gt
         self.assertTrue(uu > uma > umo > s1 > s3 > m > s2 > lmo > lma > lu)
+        # ge
+        self.assertTrue(
+            uu >= uma >= umo >= s1 >= s3 >= m >= s2 >= lmo >= lma >= lu)
 
     def test_set_ops(self):
         uu = LowerClosedInterval(1000)
@@ -185,64 +336,64 @@ class IntervalTests(unittest.TestCase):
         self.assertRaises(InvalidInterval, Interval.__and__, m, uu)
         self.assertRaises(InvalidInterval, Interval.__and__, m, lu)
 
+    def test_repr(self):
+        lower_limit = LowerClosedLimit(0)
+        upper_limit = UpperClosedLimit(1)
+        # closed interval
+        ival = Interval(lower_limit, upper_limit)
+        self.assertEqual(ival, eval(repr(ival)))
+        # upper open interval
+        ival = Interval(lower_limit=lower_limit)
+        self.assertEqual(ival, eval(repr(ival)))
+        # lower open interval
+        ival = Interval(upper_limit=upper_limit)
+        self.assertEqual(ival, eval(repr(ival)))
+        # unbounded interval
+        ival = Interval()
+        self.assertEqual(ival, eval(repr(ival)))
+
 
 class IntervalChainTests(unittest.TestCase):
 
     def test_constructor(self):
         limits = (0, 10, 50, 300)
-        # lower_closed=True, add_lower_inf=False, add_upper_inf=True
-        ic = IntervalChain(limits)
-        self.assertEqual(len(ic), len(limits))
-        self.assertEqual(ic.limits, limits)
-        self.assertFalse(ic.is_lower_infinite())
-        self.assertTrue(ic.is_upper_infinite())
-        self.assertTrue(ic[1].lower_limit.is_closed())
-        self.assertEqual(ic.total_interval, LowerClosedInterval(limits[0]))
-        ivals = ic._ivals
-        for idx in range(len(ivals) - 1):
-            self.assertTrue(ic[idx].is_adjacent(ic[idx + 1]))
-        # lower_closed=False, add_lower_inf=False, add_upper_inf=True
-        ic = IntervalChain(limits, lower_closed=False)
-        self.assertEqual(len(ic), len(limits))
-        self.assertEqual(ic.limits, limits)
-        self.assertFalse(ic.is_lower_infinite())
-        self.assertTrue(ic.is_upper_infinite())
-        self.assertTrue(ic[1].lower_limit.is_open())
-        self.assertEqual(ic.total_interval, LowerOpenInterval(limits[0]))
-        ivals = ic._ivals
-        for idx in range(len(ivals) - 1):
-            self.assertTrue(ic[idx].is_adjacent(ic[idx + 1]))
-        # lower_closed=True, add_lower_inf=True, add_upper_inf=True
-        ic = IntervalChain(limits, add_lower_inf=True)
-        self.assertEqual(len(ic), len(limits) + 1)
-        self.assertEqual(ic.limits, limits)
-        self.assertTrue(ic.is_lower_infinite())
-        self.assertTrue(ic.is_upper_infinite())
-        self.assertEqual(ic.total_interval, Interval())
-        ivals = ic._ivals
-        for idx in range(len(ivals) - 1):
-            self.assertTrue(ic[idx].is_adjacent(ic[idx + 1]))
-        # lower_closed=True, add_lower_inf=True, add_upper_inf=False
-        ic = IntervalChain(limits, add_lower_inf=True, add_upper_inf=False)
-        self.assertEqual(len(ic), len(limits))
-        self.assertEqual(ic.limits, limits)
-        self.assertTrue(ic.is_lower_infinite())
-        self.assertFalse(ic.is_upper_infinite())
-        self.assertEqual(ic.total_interval, UpperOpenInterval(limits[-1]))
-        ivals = ic._ivals
-        for idx in range(len(ivals) - 1):
-            self.assertTrue(ic[idx].is_adjacent(ic[idx + 1]))
-        # lower_closed=True, add_lower_inf=False, add_upper_inf=False
-        ic = IntervalChain(limits, add_lower_inf=False, add_upper_inf=False)
-        self.assertEqual(len(ic), len(limits) - 1)
-        self.assertEqual(ic.limits, limits)
-        self.assertFalse(ic.is_lower_infinite())
-        self.assertFalse(ic.is_upper_infinite())
-        self.assertEqual(ic.total_interval,
-                         ChainableInterval(limits[0], limits[-1]))
-        ivals = ic._ivals
-        for idx in range(len(ivals) - 1):
-            self.assertTrue(ic[idx].is_adjacent(ic[idx + 1]))
+        min_n_ivals = len(limits) - 1
+        for add_lower_inf in (True, False):
+            for add_upper_inf in (True, False):
+                n_ivals = min_n_ivals + (int(add_lower_inf) +
+                                         int(add_upper_inf))
+                for lower_closed in (True, False):
+                    ic = IntervalChain(limits,
+                                       lower_closed=lower_closed,
+                                       add_lower_inf=add_lower_inf,
+                                       add_upper_inf=add_upper_inf)
+                    self.assertEqual(ic.limits, limits)
+                    self.assertEqual(len(ic), n_ivals)
+                    self.assertEqual(ic.is_lower_infinite(), add_lower_inf)
+                    self.assertEqual(ic.is_upper_infinite(), add_upper_inf)
+                    self.assertEqual(ic[1].lower_limit.is_closed(),
+                                     lower_closed)
+                    if add_lower_inf:
+                        lower_limit = LowerInfiniteLimit()
+                    elif lower_closed:
+                        lower_limit = LowerClosedLimit(limits[0])
+                    else:
+                        lower_limit = LowerOpenLimit(limits[0])
+                    if add_upper_inf:
+                        upper_limit = UpperInfiniteLimit()
+                    elif lower_closed:
+                        upper_limit = UpperOpenLimit(limits[-1])
+                    else:
+                        upper_limit = UpperClosedLimit(limits[-1])
+                    self.assertEqual(ic.total_interval,
+                                     Interval(lower_limit, upper_limit))
+                    ivals = ic._ivals
+                    for idx in range(len(ivals) - 1):
+                        self.assertTrue(ic[idx].is_adjacent(ic[idx + 1]))
+        # limits that do not define any interval:
+        self.assertRaises(EmptyIntervalChain, IntervalChain, ())
+        self.assertRaises(EmptyIntervalChain,
+                          IntervalChain, (3,), add_upper_inf=False)
 
     def test_if_immutable(self):
         limits = [0, 10, 50, 300]
@@ -376,10 +527,19 @@ class IntervalMappingTests(unittest.TestCase):
         self.assertEqual(tuple(im.keys()), tuple(ic))
         self.assertEqual(tuple(im.values()), tuple(vals))
         self.assertEqual(tuple(im.items()), items)
+        # two tuples given
+        limits = (0, 10, 50, 300)
+        vals = ('alarming', 'low', 'medium', 'high')
+        im = IntervalMapping(limits, vals)
+        self.assertIsInstance(im._keys, IntervalChain)
+        self.assertEqual(tuple(im.keys()), tuple(IntervalChain(limits)))
+        self.assertEqual(tuple(im.values()), vals)
         # check wrong args
         self.assertRaises(TypeError, IntervalMapping)
         self.assertRaises(TypeError, IntervalMapping, 5)
         self.assertRaises(TypeError, IntervalMapping, (5, 7, 20))
+        self.assertRaises(AssertionError, IntervalMapping, (5, 7), ('a',))
+        self.assertRaises(AssertionError, IntervalMapping, (), ())
         self.assertRaises(TypeError, IntervalMapping, 'abc')
         self.assertRaises(TypeError, IntervalMapping, ic)
         self.assertRaises(TypeError, IntervalMapping, ic, vals, 'abc')
