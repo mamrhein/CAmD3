@@ -23,6 +23,7 @@ from collections import Container, Sequence, Mapping, Callable
 from functools import total_ordering, partial
 import operator
 
+__metaclass__ = type
 
 LOWER_LIMIT_SYMBOLS = ['(', '[']
 UPPER_LIMIT_SYMBOLS = [')', ']']
@@ -36,16 +37,19 @@ INTERVAL_SYMBOL = '..'
 # --- Exceptions ---
 
 class InvalidInterval(Exception):
+
     """Raised when an invalid Interval would be created."""
 
 
 class EmptyIntervalChain(Exception):
+
     """Raised when an empty IntervalChain would be created."""
 
 
 # --- Handling infinity ---
 
 class _Inf:
+
     """Value representing infinity."""
 
     __slots__ = ()
@@ -61,7 +65,7 @@ class _Inf:
             return inf
 
     def __repr__(self):
-        return "%s()" % self.__class__.__name__
+        return "%s()" % self.__class__.__name__         # pragma: no cover
 
     def __str__(self):
         return self.symbol
@@ -69,6 +73,7 @@ class _Inf:
 
 @total_ordering
 class Inf(_Inf):
+
     """Value representing (positive) infinity."""
 
     symbol = '+' + INFINITY_SYMBOL
@@ -86,6 +91,7 @@ class Inf(_Inf):
 
 @total_ordering
 class NegInf(_Inf):
+
     """Value representing negative infinity."""
 
     symbol = '-' + INFINITY_SYMBOL
@@ -104,9 +110,10 @@ class NegInf(_Inf):
 # --- Limits ---
 
 class AbstractLimit:
+
     """Abstract base class of a Limit."""
 
-    __slots__ = []
+    __slots__ = ()
 
     # used to map (is_lower, is_closed) to operator in method is_observed_by
     _ops = ((operator.lt, operator.le), (operator.gt, operator.ge))
@@ -176,6 +183,7 @@ class AbstractLimit:
 
 @total_ordering
 class InfiniteLimit(AbstractLimit):
+
     """Lower / upper limit of an unbounded (aka infinite) Interval."""
 
     __slots__ = ['_lower']
@@ -245,7 +253,7 @@ class InfiniteLimit(AbstractLimit):
             # other is not a Limit, so take it as value
             return self.value < other
 
-    def __repr__(self):
+    def __repr__(self):                                 # pragma: no cover
         return "%sInfiniteLimit()" % ['Upper', 'Lower'][self.is_lower()]
 
 # Two factory functions for creating the infinite limits
@@ -255,6 +263,7 @@ UpperInfiniteLimit = partial(InfiniteLimit, False)
 
 
 class Limit(AbstractLimit):
+
     """Lower / upper limit of an Interval."""
 
     __slots__ = ['_lower', '_value', '_closed']
@@ -308,7 +317,7 @@ class Limit(AbstractLimit):
                     # if values are equal, result depends on limit type
                     return op(self._map_limit_type(), 0)
                 return op(self_val, other)
-            except TypeError:
+            except TypeError:                           # pragma: no cover
                 return NotImplemented
 
     def adjacent_limit(self):
@@ -339,7 +348,7 @@ class Limit(AbstractLimit):
         """self >= other"""
         return self._compare(other, operator.ge)
 
-    def __repr__(self):
+    def __repr__(self):                                 # pragma: no cover
         return "%s(%s, %s, %s)" % (self.__class__.__name__,
                                    self.is_lower(),
                                    repr(self.value),
@@ -720,7 +729,7 @@ class IntervalChain(Sequence):
         if n == 0 or (n == 1 and not add_lower_inf and not add_upper_inf):
             raise EmptyIntervalChain(
                 "Given limits do not define any interval.")
-        # the iterable 'limits' needs to copied
+        # the iterable 'limits' needs to be copied
         self._limits = tuple(limits)
         self._lower_closed = lower_closed
         ivals = []
