@@ -17,19 +17,25 @@
 """Test driver for module specification."""
 
 
-import unittest
-import operator
+# standard library imports
 from itertools import combinations
-from pycomba.infrastructure import (Attribute, ValueObject, implementer,
-                                    register_utility, get_utility)
+import operator
+import unittest
+
+# third-party imports
+from ivalutils import (
+    Interval, ClosedInterval, LowerOpenInterval, UpperOpenInterval,
+    IntervalChain, InvalidInterval
+)
+from pycomba.infrastructure import (
+    Attribute, ValueObject, implementer, register_utility, get_utility
+)
 from pycomba.infrastructure.component import Component
 from pycomba.infrastructure.specification.specification import (
     Specification, NegatedSpecification, CompositeSpecification,
     IntervalSpecification, IntervalSpecificationFactory,
-    ValueSpecification, ValueSpecificationFactory)
-from pycomba.types.interval import (Interval, ClosedInterval,
-                                    LowerOpenInterval, UpperOpenInterval,
-                                    IntervalChain, InvalidInterval)
+    ValueSpecification, ValueSpecificationFactory
+)
 
 
 class ITestObj1(Component):

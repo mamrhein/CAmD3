@@ -5,7 +5,7 @@
 #
 # Author:      Michael Amrhein (michael@adrhinum.de)
 #
-# Copyright:   (c) 2013 Michael Amrhein
+# Copyright:   (c) 2013 ff. Michael Amrhein
 # License:     This program is part of a larger application. For license
 #              details please read the file LICENSE.TXT provided together
 #              with the application.
@@ -17,11 +17,16 @@
 """Implementation of base classes for specifications"""
 
 
+# standard library imports
 from abc import abstractmethod
 import operator
 from typing import Any, Callable, Iterable, Tuple, Union
+
+# third-party imports
+from ivalutils import Interval, ClosedInterval, InvalidInterval
+
+# local imports
 from .. import Component, immutable
-from ...types.interval import Interval, ClosedInterval, InvalidInterval
 
 
 @immutable
