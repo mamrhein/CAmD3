@@ -225,7 +225,7 @@ class Signature:
                         annotation = eval(annotation, namespace)
                     except NameError:
                         annotation = None
-                if isinstance(annotation, type):
+                if isinstance(annotation, (type, TypingMeta, _TypingBase)):
                     if kind == _VAR_POSITIONAL:
                         var_arg_type = annotation
                     else:
