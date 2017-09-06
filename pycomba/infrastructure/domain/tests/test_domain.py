@@ -24,6 +24,12 @@ from pycomba.infrastructure.domain import (Entity,
 
 # --- Entity ---
 
+class TestEntityMissingId(Entity):
+
+    def __init__(self):
+        pass
+
+
 class TestEntity1(Entity):
 
     id = Attribute(immutable=True,)
@@ -43,6 +49,7 @@ class TestEntity2(Entity):
 class EntityTest(unittest.TestCase):
 
     def test_constructor(self):
+        self.assertRaises(TypeError, TestEntityMissingId)
         for id in (1, 18, 'a', 'aa'):
             entity = TestEntity1(id)
             self.assertEqual(entity.id, id)
