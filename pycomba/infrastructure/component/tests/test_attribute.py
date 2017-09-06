@@ -32,7 +32,7 @@ class HelperTest(unittest.TestCase):
 # helper to create class with attribute on the fly
 def create_cls(cls_name, attr_dict):
     for name, attr in attr_dict.items():
-        attr.__set_name__(name)
+        attr.__set_name__(None, name)
     return type(str(cls_name), (), attr_dict)
 
 
@@ -49,7 +49,7 @@ class AttributeTest(unittest.TestCase):
         self.assertEqual(a.name, '<unnamed>')
         a = Attribute(immutable=True, default='5', converter=int,
                       constraints=is_number, doc='doc')
-        a.__set_name__('a')
+        a.__set_name__(None, 'a')
         self.assertTrue(a.immutable is True)
         self.assertEqual(a.default, 5)
         self.assertTrue(a.converter is int)
@@ -76,13 +76,13 @@ class AttributeTest(unittest.TestCase):
 
     def test_name(self):
         a = Attribute()
-        self.assertRaises(ValueError, a.__set_name__, '9ab')
-        a.__set_name__('a')
+        self.assertRaises(ValueError, a.__set_name__, None, '9ab')
+        a.__set_name__(None, 'a')
         self.assertEqual(a._priv_member, '_a')
-        self.assertIsNone(a.__set_name__('a'))
-        self.assertRaises(AttributeError, a.__set_name__, 'b')
+        self.assertIsNone(a.__set_name__(None, 'a'))
+        self.assertRaises(AttributeError, a.__set_name__, None, 'b')
         a = Attribute()
-        a.__set_name__('_a')
+        a.__set_name__(None, '_a')
         self.assertEqual(a._priv_member, '_a_')
 
     def test_access(self):
@@ -207,7 +207,7 @@ class MultiValueAttributeTest(unittest.TestCase):
         self.assertEqual(a.name, '<unnamed>')
         a = MultiValueAttribute(immutable=True, default={'5'}, converter=int,
                                 constraints=is_number, doc='doc')
-        a.__set_name__('a')
+        a.__set_name__(None, 'a')
         self.assertTrue(a.immutable is True)
         self.assertEqual(a.default, {5})
         self.assertTrue(a.converter is int)
@@ -436,7 +436,7 @@ class QualifiedMultiValueAttributeTest(unittest.TestCase):
         a = QualifiedMultiValueAttribute(int, immutable=True,
                                          default={1: '5'}, converter=int,
                                          constraints=is_number, doc='doc')
-        a.__set_name__('a')
+        a.__set_name__(None, 'a')
         self.assertTrue(a.immutable is True)
         self.assertEqual(a.default, {1: 5})
         self.assertTrue(a.converter is int)

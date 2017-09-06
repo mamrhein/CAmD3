@@ -77,7 +77,7 @@ class ComponentMeta(ABCMeta):
         # set name of descriptors which have a __set_name__ method
         for name, attr in namespace.items():
             try:
-                attr.__set_name__(name)
+                attr.__set_name__(None, name)
             except AttributeError:
                 pass
         # force __slots__ for immutable components

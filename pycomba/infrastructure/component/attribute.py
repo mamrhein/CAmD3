@@ -17,11 +17,15 @@
 """Descriptors for defining attributes"""
 
 
+# standard library imports
+from abc import ABCMeta
 from itertools import chain
 from keyword import iskeyword
-from typing import (Any, Callable, Iterable, Iterator, Mapping, Optional,
-                    Text, Tuple, Union)
-from typing import cast
+from typing import (
+    Any, Callable, cast, Iterable, Mapping, Optional, Text, Tuple, Union
+)
+
+# local imports
 from .immutable import Immutable
 
 # some types used in type hints
@@ -42,9 +46,11 @@ def is_identifier(s: str) -> bool:
         return False
 
 
-class Attribute:
+class AbstractAttribute(metaclass=ABCMeta):
 
-    """Descriptor class for defining attributes of objects."""
+    """Descriptor class for defining abstract attributes of objects."""
+
+    __isabstractmethod__ = True
 
     def __init__(self, immutable: bool = False, default: Any = _NODEFAULT,
                  converter: Optional[ConverterType] = None,
@@ -98,7 +104,7 @@ class Attribute:
         except AttributeError:
             return '<unnamed>'
 
-    def __set_name__(self, name: str) -> None:
+    def __set_name__(self, owner: type, name: str) -> None:
         try:
             my_name = self._name
         except AttributeError:
@@ -209,11 +215,11 @@ class Attribute:
             pass
 
 
-class AbstractAttribute(Attribute):
+class Attribute(AbstractAttribute):
 
-    """Descriptor class for defining abstract attributes of objects."""
+    """Descriptor class for defining attributes of objects."""
 
-    __isabstractmethod__ = True
+    __isabstractmethod__ = False
 
 
 def _check_instance(meth):
