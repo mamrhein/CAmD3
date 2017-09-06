@@ -19,7 +19,9 @@
 
 import importlib
 import inspect
-from typing import Any, Callable, Optional, Sequence, Text, Tuple, TypingMeta
+from typing import (
+    Any, Callable, Optional, Sequence, Text, Tuple, TypingMeta, _TypingBase
+)
 
 #_POSITIONAL_ONLY = inspect.Parameter.POSITIONAL_ONLY
 #_POSITIONAL_OR_KEYWORD = inspect.Parameter.POSITIONAL_OR_KEYWORD
@@ -42,7 +44,7 @@ def _get_constructor(cls):
 
 
 def _type_repr(t: type, prefix: str = '<', suffix: str = '>') -> str:
-    if isinstance(t, TypingMeta):
+    if isinstance(t, (TypingMeta, _TypingBase)):
         # strip module name
         s = repr(t).replace('typing.', '')
     else:
