@@ -20,8 +20,11 @@
 import importlib
 import inspect
 from typing import (
-    Any, Callable, Optional, Sequence, Text, Tuple, TypingMeta, _TypingBase
+    Any, Callable, Optional, Sequence, Text, Tuple, TypingMeta, _TypingBase,
+    Union
 )
+
+NoneType = type(None)
 
 #_POSITIONAL_ONLY = inspect.Parameter.POSITIONAL_ONLY
 #_POSITIONAL_OR_KEYWORD = inspect.Parameter.POSITIONAL_OR_KEYWORD
@@ -45,8 +48,13 @@ def _get_constructor(cls):
 
 def _type_repr(t: type, prefix: str = '<', suffix: str = '>') -> str:
     if isinstance(t, (TypingMeta, _TypingBase)):
-        # strip module name
-        s = repr(t).replace('typing.', '')
+        if t.__origin__ is Union and t.__args__[-1] is NoneType:
+            # special case Optional
+            s = "Optional[{}]".format(_type_repr(t.__args__[0],
+                                                 prefix='', suffix=''))
+        else:
+            # strip module name
+            s = repr(t).replace('typing.', '')
     else:
         s = t.__name__
     return ''.join((prefix, s, suffix))

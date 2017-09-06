@@ -176,7 +176,7 @@ class SignatureTest(unittest.TestCase):
         self.assertEqual(repr(Signature((Union[int, float],), str, str)),
                          '<Signature (<Union[int, float]>, *<str>) -> <str>>')
         self.assertEqual(repr(Signature((), Optional[int], str)),
-                         '<Signature (*<Union[int, NoneType]>) -> <str>>')
+                         '<Signature (*<Optional[int]>) -> <str>>')
 
     # def tearDown(self):
     #     pass
