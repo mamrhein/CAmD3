@@ -28,7 +28,7 @@ from typing import (Any, Callable, Iterable, MutableMapping, Sequence, Tuple)
 from .attribute import Attribute
 from .exceptions import ComponentLookupError
 from .immutable import Immutable
-from .signature import signature
+from .signature import _is_instance, _is_subclass, signature
 
 
 class _ABCSet(set):
@@ -40,9 +40,9 @@ class _ABCSet(set):
     def add(self, abc: type) -> None:
         to_be_removed = []
         for cls in self:
-            if issubclass(cls, abc):
+            if _is_subclass(cls, abc):
                 return      # we already have a more specific type
-            if issubclass(abc, cls):
+            if _is_subclass(abc, cls):
                 # replace type by more specific one
                 # (we can't do that directly while iterating over the set)
                 to_be_removed.append(cls)
@@ -187,7 +187,7 @@ class ComponentMeta(ABCMeta):
             -> Callable[[Any], 'ComponentMeta']:
         sgn = signature(adapter)
         return_type = sgn.return_type
-        assert issubclass(return_type, cls), \
+        assert _is_subclass(return_type, cls), \
             "Adapter returns instance of '{}', not a subclass of '{}'".format(
                 return_type, cls)
         arg_types, var_arg_type = sgn.arg_types, sgn.var_arg_type
@@ -206,11 +206,10 @@ class ComponentMeta(ABCMeta):
     def get_adapter(cls, obj):
         """Return adapter adapting `obj` to the interface defined by `cls`."""
         # FIXME: make the algo more deterministic
-        look_for = type(obj)
         found = None
         for required, adapters in cls.__adapters__.items():
-            if issubclass(look_for, required):
-                if not found or issubclass(required, found):
+            if _is_instance(obj, required):
+                if not found or _is_subclass(required, found):
                     # required is more specific
                     found, adapter = required, adapters[0]
         if found:

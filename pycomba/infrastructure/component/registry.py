@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 # local imports
 from .component import ComponentMeta
 from .exceptions import ComponentRegisterError, ComponentLookupError
-from .signature import signature
+from .signature import _is_subclass, signature
 from ...gbbs.tools import iter_subclasses
 
 
@@ -53,7 +53,7 @@ class ComponentRegistry:
         if interface is None:
             interface = sgn.return_type
         else:
-            if not issubclass(sgn.return_type, interface):
+            if not _is_subclass(sgn.return_type, interface):
                 raise ComponentRegisterError(
                     "Given `factory` returns an instances of {}, "
                     "not an instance of `interface` {}."

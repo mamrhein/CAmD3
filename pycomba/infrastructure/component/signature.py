@@ -50,10 +50,74 @@ def _type_repr(t: type, prefix: str = '<', suffix: str = '>') -> str:
     return ''.join((prefix, s, suffix))
 
 
+def _is_instance(obj, cls):
+    try:
+        return isinstance(obj, cls)
+    except TypeError:
+        # handle special cases not handled in typing.py
+        # treat any object as instance of Any
+        if cls is Any:
+            return True
+        # treat a tuple as instance of a parameterized tuple T if each of its
+        # members is an instance of the corresponding parameter of T
+        if issubclass(cls, Tuple):
+            if isinstance(obj, Tuple):
+                cls_args = cls.__args__
+                if cls_args[-1] == Ellipsis:
+                    item_cls = cls_args[0]
+                    if all(_is_instance(item, item_cls)
+                           for item in obj):
+                        return True
+                    return False
+                if len(cls_args) != len(obj):
+                    return False
+                if all(_is_instance(item, cls_arg)
+                       for item, cls_arg
+                       in zip(obj, cls_args)):
+                    return True
+            return False
+
+
+def _is_subclass(subcls, cls):
+    try:
+        return issubclass(subcls, cls)
+    except TypeError:
+        # handle special cases not handled in typing.py
+        # treat every class as its own subclass
+        if subcls is cls:
+            return True
+        # treat any class as subclass of Any
+        if cls is Any:
+            return True
+        # treat a parameterized Tuple T1 as a subclass of a parameterized
+        # Tuple T2, if they have the same number of parameters and
+        # if each parameter of T1 is a subclass of the corresponding parameter
+        # of T2
+        if issubclass(cls, Tuple):
+            if issubclass(subcls, Tuple):
+                try:
+                    cls_args = cls.__args__
+                    subcls_args = subcls.__args__
+                except AttributeError:
+                    return False
+                if len(cls_args) != len(subcls_args):
+                    return False
+                if cls_args[-1] == Ellipsis:
+                    if subcls_args[-1] == Ellipsis:
+                        if _is_subclass(subcls_args[0], cls_args[0]):
+                            return True
+                    return False
+                if all(_is_subclass(subcls_arg, cls_arg)
+                       for subcls_arg, cls_arg
+                       in zip(subcls_args, cls_args)):
+                    return True
+            return False
+
+
 def _is_compatible(t1, t2):
     # a subclass is compatible
     try:
-        if issubclass(t1, t2):
+        if _is_subclass(t1, t2):
             return True
     except TypeError:
         pass
