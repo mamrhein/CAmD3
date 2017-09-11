@@ -80,10 +80,16 @@ class StateExtensionTest(unittest.TestCase):
         self.obj = Obj()
 
     def test_constructor(self):
+        # key set?
         self.assertIsNot(SExt1._key, SExt2._key)
         self.assertIs(SExt2._key, SExt2Sub1._key)
         self.assertIs(SExt2._key, SExt2Sub2._key)
         self.assertIsNot(SExt2._key, SExt2Sub3._key)
+        # adapter set?
+        adapters = SExt1.__adapters__
+        self.assertEqual(len(adapters), 1)
+        self.assertIn(object, adapters)
+        self.assertEqual(len(adapters[object]), 1)
 
     def test_access(self):
         obj = self.obj

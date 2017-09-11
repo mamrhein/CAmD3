@@ -130,12 +130,6 @@ class ABCSetTest(unittest.TestCase):
 class ComponentMetaTest(unittest.TestCase):
 
     def test_constructor(self):
-        # definition order
-        self.assertEqual(getattr(TestComp1, '__definition_order__', None),
-                         DFLT_NAMESPACE)
-        self.assertEqual(getattr(TestComp2, '__definition_order__', None),
-                         DFLT_NAMESPACE + ('attr1', 'attr2', 'meth', 'attr3',
-                                           'prop'))
         # name of descriptors
         for name in ('attr1', 'attr2', 'attr3'):
             self.assertEqual(getattr(getattr(TestComp2, name, None),
@@ -162,11 +156,6 @@ class ComponentMetaTest(unittest.TestCase):
         self.assertEqual(TestImpl.all_attr_names, ())
         self.assertEqual(TestComp6.attr_names, ('c',))
         self.assertEqual(TestComp6.all_attr_names, ('a', 'b', 'c'))
-
-    def test_definition_order(self):
-        self.assertEqual(TestComp2.definition_order[-5:],
-                         ('attr1', 'attr2', 'meth', 'attr3', 'prop'))
-        self.assertEqual(TestComp6.definition_order[-2:], ('c', '__init__'))
 
     def test_implementer(self):
         self.assertTrue(issubclass(TestImpl, TestComp1))

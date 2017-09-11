@@ -19,10 +19,10 @@
 
 # standard lib imports
 from abc import ABCMeta, abstractmethod
-from collections import OrderedDict
 from itertools import chain
-import types
 from typing import (Any, Callable, Iterable, MutableMapping, Sequence, Tuple)
+# work-around for issue 29581:
+from _weakrefset import WeakSet
 
 # local imports
 from .attribute import Attribute
@@ -59,6 +59,7 @@ class ComponentMeta(ABCMeta):
         cls_name(str): name of new component
         bases(Tuple[type, ...]): base classes
         namespace(Mapping[str, Any]): namespace of new component
+        **kwds (Any): additional class statement args
 
     Returns:
         ComponentMeta: new component class
@@ -67,66 +68,61 @@ class ComponentMeta(ABCMeta):
     def __new__(metacls, cls_name: str, bases: Tuple[type, ...],
                 namespace: MutableMapping[str, Any],
                 **kwds: Any) -> 'ComponentMeta':
-        # turn __init_subclass__ into a classmethod if it is defined as
-        # instance method
-        init_subclass = namespace.get('__init_subclass__')  # type: Callable
-        if isinstance(init_subclass, types.FunctionType):
-            namespace['__init_subclass__'] = classmethod(init_subclass)
-        # save definition order
-        namespace['__definition_order__'] = tuple(namespace)
-        # set name of descriptors which have a __set_name__ method
-        for name, attr in namespace.items():
-            try:
-                attr.__set_name__(None, name)
-            except AttributeError:
-                pass
-        # force __slots__ for immutable components
+        # force __slots__ for attribute of immutable components
         if any(issubclass(cls, Immutable) for cls in bases):
-            metacls._init_slots(cls_name, bases, namespace)
+            all_bases = set(chain(*(cls.__mro__[:-1] for cls in bases
+                                    if cls is not object)))
+            if any('__slots__' not in cls.__dict__
+                   for cls in all_bases):
+                raise TypeError("All base classes of '" + cls_name +
+                                "' must have an attribute '__slots__'.")
+            slots = namespace.get('__slots__', ())
+            new_slots = []
+            for name, attr in namespace.items():
+                if isinstance(attr, Attribute):
+                    # type.__new__ will call __set_name__ later, but we
+                    # need to do it here in order to get the private member
+                    # names
+                    attr.__set_name__(None, name)
+                    priv_member = attr._priv_member
+                    if priv_member not in slots:
+                        new_slots.append(priv_member)
+            namespace['__slots__'] = tuple(chain(slots, new_slots))
         # create class
-        cls = super().__new__(metacls, cls_name, bases, namespace)
-        # additional class attributes
-        cls.__virtual_bases__ = _ABCSet()
-        cls.__adapters__ = {}   # type: Dict[type, MutableSequence[Callable]]
-        # call __init_subclass__ of direct superclass
-        try:
-            init_subclass = super(cls, cls).__init_subclass__
-        except AttributeError:
-            pass
-        else:
-            init_subclass(**kwds)
+        # cls = super().__new__(metacls, cls_name, bases, namespace, **kwds)
+        # --- work-around for issue 29581:
+        # ABCMeta.__new__ does not support **kwargs, we cannot call it here.
+        # Instead we call type.__new__ directly and implement the rest of
+        # ABCMeta.__new__ here.
+        cls = type.__new__(metacls, cls_name, bases, namespace, **kwds)
+        # Compute set of abstract method names
+        abstracts = {name
+                     for name, value in namespace.items()
+                     if getattr(value, "__isabstractmethod__", False)}
+        for base in bases:
+            for name in getattr(base, "__abstractmethods__", set()):
+                value = getattr(cls, name, None)
+                if getattr(value, "__isabstractmethod__", False):
+                    abstracts.add(name)
+        cls.__abstractmethods__ = frozenset(abstracts)
+        # Set up inheritance registry
+        cls._abc_registry = WeakSet()
+        cls._abc_cache = WeakSet()
+        cls._abc_negative_cache = WeakSet()
+        cls._abc_negative_cache_version = ABCMeta._abc_invalidation_counter
+        # --- end work-around
         # now the new class is ready
         return cls
 
     @classmethod
     def __prepare__(metacls, name: str, bases: Tuple[type, ...],
                     **kwds: Any) -> MutableMapping:
-        return OrderedDict()
-
-    def __init__(cls, cls_name: str, bases: Tuple[type, ...],
-                 namespace: MutableMapping[str, Any],
-                 **kwds: Any) -> None:
-        super().__init__(cls_name, bases, namespace)
-
-    @property
-    def definition_order(cls):
-        return cls.__definition_order__
-
-    @classmethod
-    def _init_slots(metacls, cls_name: str, bases: Tuple[type, ...],
-                    namespace: MutableMapping[str, Any]) -> None:
-        all_bases = set(chain(*(cls.__mro__[:-1] for cls in bases
-                                if cls is not object)))
-        if any('__slots__' not in cls.__dict__
-               for cls in all_bases):
-            raise TypeError("All base classes of '" + cls_name +
-                            "' must have an attribute '__slots__'.")
-        slots = namespace.get('__slots__', ())
-        new_slots = (attr._priv_member
-                     for attr in namespace.values()
-                     if isinstance(attr, Attribute) and
-                     attr._priv_member not in slots)
-        namespace['__slots__'] = tuple(slots) + tuple(new_slots)
+        namespace = {}
+        # additional class attributes
+        adapter_registry = {}   # type: Dict[type, MutableSequence[Callable]]
+        namespace['__virtual_bases__'] = _ABCSet()
+        namespace['__adapters__'] = adapter_registry
+        return namespace
 
     def __dir__(cls) -> Sequence[str]:
         """dir(cls)"""
@@ -158,8 +154,8 @@ class ComponentMeta(ABCMeta):
         """Return the names of all attributes defined by the component (in
         definition order).
         """
-        return tuple(name for name in cls.definition_order
-                     if isinstance(getattr(cls, name), Attribute))
+        return tuple(name for name, item in cls.__dict__.items()
+                     if isinstance(item, Attribute))
 
     @property
     def all_attr_names(cls) -> Tuple[str, ...]:
@@ -168,12 +164,11 @@ class ComponentMeta(ABCMeta):
         """
         seen = {}
         return tuple(seen.setdefault(name, name)
-                     for name in chain(*(acls.definition_order
+                     for name in chain(*(acls.attr_names
                                          for acls
                                          in reversed(cls.__mro__[:-1])
                                          if issubclass(acls, Component)))
-                     if name not in seen and
-                     isinstance(getattr(cls, name), Attribute))
+                     if name not in seen)
 
     def register(cls, subcls: type):
         """Register a virtual subclass of the component."""

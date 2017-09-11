@@ -103,8 +103,8 @@ class StateExtension(Extension):
 
     @classmethod
     def __init_subclass__(cls, **kwds: Any) -> None:
-        super().__init_subclass__(**kwds)
         key = kwds.pop('key', None)
+        super().__init_subclass__(**kwds)
         if key is None:
             try:
                 cls._key
@@ -132,8 +132,8 @@ class TransientExtension(Extension):
 
     @classmethod
     def __init_subclass__(cls, **kwds: Any) -> None:
-        super().__init_subclass__(**kwds)
         obj_map = kwds.pop('obj_map', None)
+        super().__init_subclass__(**kwds)
         if obj_map is None:
             try:
                 cls._obj_map
