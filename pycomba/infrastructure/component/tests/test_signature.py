@@ -12,9 +12,10 @@
 
 
 import unittest
-from typing import Any, Dict, Optional, Union
+from numbers import Number
+from typing import Any, Dict, Optional, Tuple, Union
 from pycomba.infrastructure.component.signature import (
-    _get_constructor, Signature, signature
+    _get_constructor, _is_instance, _is_subclass, Signature, signature
 )
 
 
@@ -67,6 +68,36 @@ def func5(x: int, y):
 
 def func6(x: int, y: 'kribel'):
     pass
+
+
+class HelperTest(unittest.TestCase):
+
+    def test_is_instance(self):
+        for anything in (object(), 27, func4, WithoutInitAndNew):
+            self.assertTrue(_is_instance(anything, Any))
+        self.assertTrue(_is_instance((1, 'a', WithoutInitAndNew),
+                                     Tuple[int, str, Any]))
+        self.assertFalse(_is_instance((1, 'a', WithoutInitAndNew, 3.0),
+                                      Tuple[int, str, Any]))
+        self.assertFalse(_is_instance((1, 3.0, WithoutInitAndNew),
+                                      Tuple[int, str, Any]))
+        self.assertTrue(_is_instance((1, 2, 3),
+                                     Tuple[int, ...]))
+        self.assertFalse(_is_instance((1, 2, 3.0),
+                                      Tuple[int, ...]))
+
+    def test_is_subclass(self):
+        for anytype in (object, int, type(func4), WithoutInitAndNew):
+            self.assertTrue(_is_subclass(anytype, anytype))
+            self.assertTrue(_is_subclass(anytype, Any))
+        self.assertTrue(_is_subclass(Tuple[int, ...], Tuple[Number, ...]))
+        self.assertFalse(_is_subclass(Tuple[int, ...], Tuple[Number, str]))
+        self.assertTrue(_is_subclass(Tuple[int, ...], tuple))
+        self.assertTrue(_is_subclass(Tuple[int, ...], Tuple))
+        self.assertTrue(_is_subclass(Tuple[int, str], Tuple))
+        self.assertFalse(_is_subclass(Tuple, Tuple[int, str]))
+        self.assertFalse(_is_subclass(Tuple[int, str, int], Tuple[int, str]))
+        self.assertTrue(_is_subclass(Tuple[int, str], Tuple[Number, str]))
 
 
 class SignatureTest(unittest.TestCase):
