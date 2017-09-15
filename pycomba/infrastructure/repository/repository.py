@@ -17,7 +17,11 @@
 """Base classes for repositories"""
 
 
+# standard lib imports
 from abc import abstractmethod
+from collections import Container, Sized
+
+# local imports
 from ..component import Attribute, Component, implementer
 from ..domain import Entity
 
@@ -28,7 +32,7 @@ class DuplicateIdError(Exception):
     detected."""
 
 
-class Repository(Component):
+class Repository(Component, Container, Sized):
 
     """Dict-like object that holds entities with a given interface."""
 
@@ -56,10 +60,6 @@ class Repository(Component):
         """Get the entity with the given id.
 
         If no such entity is present in the repository, raise a KeyError."""
-
-    @abstractmethod
-    def __len__(self):
-        """len(self) -> number of entities contained in repository."""
 
 
 @implementer(Repository)
@@ -111,6 +111,14 @@ class InMemoryRepository:
 
         If no such entity is present in the repository, raise a KeyError."""
         return self._dict[entityId]
+
+    def __contains__(self, entity):
+        """`entity` in self -> True if `entity` contained in repository."""
+        try:
+            self._dict[entity.id]
+            return True
+        except KeyError:
+            return False
 
     def __len__(self):
         """len(self) -> number of entities contained in repository."""
