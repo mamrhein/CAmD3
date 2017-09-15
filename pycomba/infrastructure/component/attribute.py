@@ -100,7 +100,7 @@ class AbstractAttribute(metaclass=ABCMeta):
     def name(self) -> str:
         """Name of the attribute."""
         try:
-            return self._name               # type: str
+            return self._name
         except AttributeError:
             return '<unnamed>'
 

@@ -228,12 +228,12 @@ class BSONEncoder:
         self._encoder_map = encoder_map
         self._transformers = transformers or []
 
-    def _get_encoder(self, obj: object):
+    def _get_encoder(self, obj: object) -> EncodeFunction:
         obj_type = type(obj)
         try:
             return self._encoder_map[obj_type]
         except KeyError:
-            return _dflt_encoder_map[obj_type]      # type: EncodeFunction
+            return _dflt_encoder_map[obj_type]
 
     def encode(self, obj: object, stream: ByteStream) -> int:
         """Encode obj as BSON document and write it to stream."""
@@ -381,7 +381,7 @@ class BSONDecoder:
         try:
             return self._decoder_map[code]
         except KeyError:
-            return _dflt_decoder_map[code]      # type: DecodeFunction
+            return _dflt_decoder_map[code]
 
     def decode(self, stream: ByteStream) -> object:
         """Read BSON document from stream and return reconstructed object."""

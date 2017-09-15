@@ -75,7 +75,7 @@ class EDTMeta(ComponentMeta):
     @property
     def enum(cls) -> EnumMeta:
         """Enum subclass associated with `cls`."""
-        return cls._enum                    # type: EnumMeta
+        return cls._enum
 
     def populate(cls, src: Union[Iterable, Dict], complete: bool = True) \
             -> None:
