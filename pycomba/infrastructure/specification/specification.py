@@ -29,6 +29,10 @@ from ivalutils import Interval, ClosedInterval, InvalidInterval
 from .. import Component, immutable
 
 
+# TODO: more documentation
+# TODO: factory function 'from_expression'
+
+
 @immutable
 class Specification(Component):
 
