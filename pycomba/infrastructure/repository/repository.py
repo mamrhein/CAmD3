@@ -20,10 +20,12 @@
 # standard lib imports
 from abc import abstractmethod
 from collections import Container, Sized
+from typing import Any, Iterable
 
 # local imports
-from ..component import Attribute, Component, implementer
+from ..component import Attribute, Component, instance
 from ..domain import Entity
+from ..specification import Specification
 
 
 class DuplicateIdError(Exception):
@@ -34,50 +36,45 @@ class DuplicateIdError(Exception):
 
 class Repository(Component, Container, Sized):
 
-    """Dict-like object that holds entities with a given interface."""
+    """Container that holds entities with a given interface."""
 
-    interface = Attribute(doc="Interface that the objects in the repository "
+    interface = Attribute(immutable=True,
+                          constraints=instance(Entity),
+                          doc="Interface that the objects in the repository "
                           "provide.")
 
     @abstractmethod
-    def add(entity):
+    def add(entity: Entity) -> None:
         """Add entity to the repository.
 
         This has no effect if entity is already present in the repository."""
 
     @abstractmethod
-    def remove(entity):
+    def remove(entity: Entity) -> None:
         """Remove entity from the repository.
 
         If entity is not present in the repository, raise a KeyError."""
 
     @abstractmethod
-    def find(spec):
+    def find(spec: Specification) -> Iterable[Entity]:
         """Find all entities in the repository which satisfy spec."""
 
     @abstractmethod
-    def get(entityId):
+    def get(entityId: Any) -> Entity:
         """Get the entity with the given id.
 
         If no such entity is present in the repository, raise a KeyError."""
 
 
-@implementer(Repository)
-class InMemoryRepository:
+class InMemoryRepository(Repository):
 
-    """Set-like object that holds entities with a given interface."""
+    """Non-persistent container that holds entities with a given interface."""
 
-    def __init__(self, interface):
-        assert issubclass(interface, Entity)
-        self._interface = interface
+    def __init__(self, interface: Entity) -> None:
+        self.interface = interface
         self._dict = {}
 
-    @property
-    def interface(self):
-        """Interface that the objects in the repository provide."""
-        return self._interface
-
-    def add(self, entity):
+    def add(self, entity: Entity) -> None:
         """Add entity to the repository.
 
         This has no effect if entity is already present in the repository."""
@@ -91,7 +88,7 @@ class InMemoryRepository:
         except KeyError:
             sDict[key] = entity
 
-    def remove(self, entity):
+    def remove(self, entity: Entity) -> None:
         """Remove entity from the repository.
 
         If entity is not present in the repository, raise a KeyError."""
@@ -102,17 +99,17 @@ class InMemoryRepository:
         else:
             raise DuplicateIdError
 
-    def find(self, spec):
+    def find(self, spec: Specification) -> Iterable[Entity]:
         """Find all entities in the repository which satisfy spec."""
         return (entity for entity in self._dict.values() if spec(entity))
 
-    def get(self, entityId):
+    def get(self, entityId: Any) -> Entity:
         """Get the entity with the given id.
 
         If no such entity is present in the repository, raise a KeyError."""
         return self._dict[entityId]
 
-    def __contains__(self, entity):
+    def __contains__(self, entity: Entity) -> bool:
         """`entity` in self -> True if `entity` contained in repository."""
         try:
             self._dict[entity.id]
@@ -120,6 +117,6 @@ class InMemoryRepository:
         except KeyError:
             return False
 
-    def __len__(self):
+    def __len__(self) -> int:
         """len(self) -> number of entities contained in repository."""
         return len(self._dict)
