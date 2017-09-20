@@ -23,7 +23,7 @@ from collections import Container, Sized
 from typing import Any, Iterable
 
 # local imports
-from ..component import Attribute, Component, instance
+from ..component import Attribute, Component, subclass
 from ..domain import Entity
 from ..specification import Specification
 
@@ -39,7 +39,7 @@ class Repository(Component, Container, Sized):
     """Container that holds entities with a given interface."""
 
     interface = Attribute(immutable=True,
-                          constraints=instance(Entity),
+                          constraints=subclass(Entity),
                           doc="Interface that the objects in the repository "
                           "provide.")
 
@@ -78,24 +78,24 @@ class InMemoryRepository(Repository):
         """Add entity to the repository.
 
         This has no effect if entity is already present in the repository."""
-        assert(self._interface.providedBy(entity))
-        sDict = self._dict
+        _dict = self._dict
         key = entity.id
         try:
-            if sDict[key] is entity:
+            if _dict[key] is entity:
                 return
             raise DuplicateIdError
         except KeyError:
-            sDict[key] = entity
+            assert(issubclass(entity, self.interface))
+            _dict[key] = entity
 
     def remove(self, entity: Entity) -> None:
         """Remove entity from the repository.
 
         If entity is not present in the repository, raise a KeyError."""
-        sDict = self._dict
+        _dict = self._dict
         key = entity.id
-        if sDict[key] is entity:
-            del sDict[key]
+        if _dict[key] is entity:
+            del _dict[key]
         else:
             raise DuplicateIdError
 
