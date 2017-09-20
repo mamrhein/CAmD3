@@ -113,10 +113,10 @@ class InMemoryRepository(Repository):
     def __contains__(self, entity: Entity) -> bool:
         """`entity` in self -> True if `entity` contained in repository."""
         try:
-            self._dict[entity.id]
-            return True
+            value = self._dict[entity.id]
         except KeyError:
             return False
+        return value is entity
 
     def __len__(self) -> int:
         """len(self) -> number of entities contained in repository."""
