@@ -85,8 +85,9 @@ class InMemoryRepository(Repository):
                 return
             raise DuplicateIdError
         except KeyError:
-            assert(issubclass(entity, self.interface))
-            _dict[key] = entity
+            pass
+        assert(isinstance(entity, self.interface))
+        _dict[key] = entity
 
     def remove(self, entity: Entity) -> None:
         """Remove entity from the repository.
