@@ -22,7 +22,7 @@ from .component import Component, implementer
 from .constraints import (LengthConstraint,
                           ValueConstraint, between, ge, gt, instance, is_int,
                           is_number, is_rational, le, length, lt, max_length,
-                          min_length, non_negative)
+                          min_length, non_negative, subclass)
 from .immutable import Immutable, immutable, is_immutable
 from .registry import (ComponentLookupError, get_utility, register_factory,
                        register_utility)
@@ -51,6 +51,7 @@ __all__ = [
     'max_length',
     'min_length',
     'non_negative',
+    'subclass',
     # immutable
     'Immutable',
     'immutable',

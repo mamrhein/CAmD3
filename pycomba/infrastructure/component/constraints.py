@@ -23,6 +23,14 @@ import operator
 from typing import Any, Callable, Sized
 
 
+def subclass(*types: type) -> Callable[[Any], bool]:
+    """Return function to be used as type constraint checker."""
+    func = lambda value: issubclass(value, types)
+    func.__doc__ = "Value of attribute '{}' must be a subclass of " \
+                   + ' or '.join((cls.__name__ for cls in types)) + '.'
+    return func
+
+
 def instance(*types: type) -> Callable[[Any], bool]:
     """Return function to be used as type constraint checker."""
     func = lambda value: isinstance(value, types)
@@ -89,4 +97,5 @@ __all__ = [
     'max_length',
     'min_length',
     'non_negative',
+    'subclass',
 ]
