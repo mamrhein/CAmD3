@@ -10,6 +10,7 @@
 # $Source$
 # $Revision$
 
+import gc
 import unittest
 from weakref import WeakKeyDictionary
 from pycomba.infrastructure.component.extension import (
@@ -181,6 +182,27 @@ class TransientExtensionTest(unittest.TestCase):
         t1.attach_to(obj)
         self.assertIs(TExt1.adapt(obj), t1)
         self.assertIs(TExt1[obj], t1)
+
+    def test_transience(self):
+        Obj = type(self.obj)
+        obj = Obj()
+        t = TExt1()
+        prev_map = dict(TExt1._obj_map)
+        t.attach_to(obj)
+        self.assertEqual(len(TExt1._obj_map), len(prev_map) + 1)
+        self.assertIn(obj, TExt1._obj_map)
+        del obj
+        gc.collect()                        # force gc
+        self.assertEqual(TExt1._obj_map, prev_map)
+        obj = Obj()
+        t = TExt1()
+        t.attach_to(obj)
+        self.assertEqual(len(TExt1._obj_map), len(prev_map) + 1)
+        self.assertIn(obj, TExt1._obj_map)
+        obj = Obj()
+        self.assertNotIn(obj, TExt1._obj_map)
+        gc.collect()                        # force gc
+        self.assertEqual(TExt1._obj_map, prev_map)
 
 
 if __name__ == '__main__':
