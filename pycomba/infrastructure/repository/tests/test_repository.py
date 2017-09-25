@@ -10,9 +10,10 @@
 # $Source$
 # $Revision$
 
-import unittest
-import operator
 from datetime import date
+import operator
+import unittest
+
 from pycomba.infrastructure.component import Attribute
 from pycomba.infrastructure.domain import Entity
 from pycomba.infrastructure.repository.repository import (
