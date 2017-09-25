@@ -69,7 +69,9 @@ class ObjstoreTest(unittest.TestCase):
     def test_contains(self):
         objstore = self.objstore
         for p in PERSONS:
-            self.assertIn(p.id, objstore)
+            # force use of ObjectStore.__contains__
+            self.assertTrue(ObjectStore.__contains__(objstore, p.id))
+        self.assertFalse(ObjectStore.__contains__(objstore, 'dummy'))
 
     def test_get_item(self):
         objstore = self.objstore
