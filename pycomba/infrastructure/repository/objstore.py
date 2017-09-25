@@ -43,16 +43,16 @@ class ObjectStore(Component):
             return True
 
     @abstractmethod
-    def __getitem__(self, key):
+    def __getitem__(self, key):                         # pragma: no cover
         """self[key]"""
         raise KeyError
 
     @abstractmethod
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):                  # pragma: no cover
         """self[key] = value"""
         raise KeyError
 
     @abstractmethod
-    def __delitem__(self, key):
+    def __delitem__(self, key):                         # pragma: no cover
         """del self[key]"""
         raise KeyError
