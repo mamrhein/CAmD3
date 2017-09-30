@@ -223,7 +223,6 @@ class Component(metaclass=ComponentMeta):
     @abstractmethod
     def __init__(self, *args, **kwds) -> None:
         """Initialize instance of component."""
-        super().__init__(*args, **kwds)
 
 
 def implementer(*interfaces: type) -> Callable[[type], type]:
