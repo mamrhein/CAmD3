@@ -16,7 +16,7 @@
 """Base classes for domain driven design"""
 
 # from abc import abstractmethod
-from typing import Any, Callable, Dict, MutableMapping, Sequence, Set, Tuple
+from typing import Any, Tuple
 from .idfactories import UUIDGenerator
 from ..component import (AbstractAttribute, Attribute, Component, get_utility,
                          Immutable)
@@ -34,12 +34,15 @@ class Entity(Component):
                                "identity of the entity.")
 
     def __eq__(self, other: Any) -> bool:
-        """self == other"""
-        return self.__class__ is other.__class__ and self.id == other.id
+        """self == other
+
+        Entities are only equal if they are identical.
+        """
+        return self is other
 
     def __hash__(self) -> int:
         """hash(self)"""
-        return hash((self.__class__, self.id))
+        return id(self)
 
 
 class AggregateRoot(Entity):

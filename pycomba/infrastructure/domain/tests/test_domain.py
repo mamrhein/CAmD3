@@ -55,18 +55,18 @@ class EntityTest(unittest.TestCase):
             self.assertEqual(entity.id, id)
 
     def test_equality(self):
-        for cls1 in (TestEntity1, TestEntity2):
-            for id1 in (1, 18, 'a', object()):
+        classes = (TestEntity1, TestEntity2)
+        ids = (1, 18, 'a', object())
+        for cls1 in classes:
+            for id1 in ids:
                 e1 = cls1(id1)
-                for cls2 in (TestEntity1, TestEntity2):
-                    for id2 in (1, 18, 'a', object()):
+                for cls2 in classes:
+                    for id2 in ids:
                         e2 = cls2(id2)
-                        if cls1 is cls2 and id1 == id2:
-                            self.assertEqual(e1, e2)
-                            self.assertEqual(hash(e1), hash(e2))
-                        else:
-                            self.assertNotEqual(e1, e2)
-                            self.assertNotEqual(hash(e1), hash(e2))
+                        self.assertNotEqual(e1, e2)
+                        self.assertNotEqual(hash(e1), hash(e2))
+        e1 = TestEntity1(5)
+        self.assertEqual(e1, e1)
 
 
 # --- AggregateRoot ---
