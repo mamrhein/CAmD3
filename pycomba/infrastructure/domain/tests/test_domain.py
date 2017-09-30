@@ -74,7 +74,7 @@ class EntityTest(unittest.TestCase):
 class TestAggregate(AggregateRoot):
 
     def __init__(self, *args, **kwds):
-        pass
+        super().__init__(self, *args, **kwds)
 
 
 class AggregateRootTest(unittest.TestCase):

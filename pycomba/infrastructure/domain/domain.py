@@ -15,7 +15,7 @@
 
 """Base classes for domain driven design"""
 
-# from abc import abstractmethod
+from abc import abstractmethod
 from typing import Any, Tuple
 from .idfactories import UUIDGenerator
 from ..component import (AbstractAttribute, Attribute, Component, get_utility,
@@ -57,11 +57,11 @@ class AggregateRoot(Entity):
                    doc="Attribute representing the identity of the aggregate."
                    )
 
-    def __new__(cls, *args, **kwds):
-        self = super(AggregateRoot, cls).__new__(cls)
+    @abstractmethod
+    def __init__(self, *args, **kwds) -> None:
+        super().__init__(self, *args, **kwds)
         uuidGen = get_utility(UUIDGenerator)
         self._id = next(uuidGen)
-        return self
 
 
 class ValueObject(Component, Immutable):
