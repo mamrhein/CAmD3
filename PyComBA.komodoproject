@@ -8,9 +8,9 @@
   <string id="cwd"></string>
   <string id="documentRoot"></string>
   <string id="executable-params"></string>
-  <string relative="path" id="filename">infrastructure/component/registry.py</string>
+  <string id="filename"></string>
   <string id="getparams"></string>
-  <string id="language">Python</string>
+  <string id="language">Python3</string>
   <string id="mpostparams"></string>
   <string id="params"></string>
   <string id="postparams"></string>
@@ -28,7 +28,10 @@
   <boolean id="checkDiskFile">1</boolean>
   <boolean id="checkNetworkDiskFile">1</boolean>
   <long id="codeintel.scanner.max_depth">10</long>
-  <string id="currentInvocationLanguage">Python</string>
+  <string id="cordovaInterpreter"></string>
+  <string id="currentInvocationLanguage">Python3</string>
+  <string id="defaultDateFormat">%25Y-%25m-%25d</string>
+  <string id="dockerBinary"></string>
   <string id="donotask_action_close_deleted_files"></string>
   <string id="donotask_action_dragdrop_uri"></string>
   <string id="donotask_action_reload_changed_files">All</string>
@@ -48,11 +51,14 @@
   <string id="jslintOptions"></string>
   <string id="jslint_linter_chooser">default</string>
   <string id="jslint_linter_specific"></string>
-  <string id="language">Python</string>
+  <string id="language">Python3</string>
+  <string id="languages/Python/newEncoding">utf-8</string>
+  <string id="languages/Python3/newEncoding">utf-8</string>
   <string id="lastInvocation">default</string>
   <string id="lastTestPlanName_pref">New test plan #1</string>
   <string id="last_local_directory">None</string>
   <string id="last_remote_directory">None</string>
+  <string id="lessDefaultInterpreter">None</string>
   <boolean id="lintClearOnTextChange">0</boolean>
   <long id="lintDelay">1000</long>
   <boolean id="lintEOLs">1</boolean>
@@ -66,19 +72,27 @@
   <boolean id="lintWithJSHint">0</boolean>
   <boolean id="lintWithJSLint">0</boolean>
   <boolean id="lint_coffee_script">1</boolean>
+  <boolean id="lint_python3_with_pep83">1</boolean>
   <boolean id="lint_python3_with_pychecker3">0</boolean>
   <boolean id="lint_python3_with_pyflakes3">1</boolean>
   <boolean id="lint_python3_with_pylint3">0</boolean>
   <boolean id="lint_python3_with_standard_python">1</boolean>
+  <boolean id="lint_python_with_pep8">1</boolean>
   <boolean id="lint_python_with_pychecker">0</boolean>
-  <boolean id="lint_python_with_pyflakes">0</boolean>
+  <boolean id="lint_python_with_pyflakes">1</boolean>
   <boolean id="lint_python_with_pylint">0</boolean>
   <boolean id="lint_python_with_standard_python">1</boolean>
+  <string id="pep83_checking_rcfile">/home/ma/.config/pep8</string>
+  <string id="pep8_checking_rcfile">/home/ma/.config/pep8</string>
   <string id="perl_lintOption">cw</string>
   <boolean id="perl_lintOption_disableBeginBlocks">1</boolean>
   <boolean id="perl_lintOption_includeCurrentDirForLinter">1</boolean>
   <string id="perl_lintOption_perlCriticLevel">off</string>
+  <string id="phonegapInterpreter"></string>
+  <string id="pip3DefaultInterpreter">/usr/bin/pip3</string>
+  <string id="pipDefaultInterpreter"></string>
   <long id="prefs_version">1</long>
+  <string id="projectLanguage">Python3</string>
   <string id="pychecker3_checking_rcfile"></string>
   <string id="pychecker3_wrapper_location"></string>
   <string id="pychecker_checking_rcfile"></string>
@@ -88,10 +102,12 @@
   <string relative="path" id="python3ExtraPaths"></string>
   <string relative="path" id="pythonExtraPaths"></string>
   <string id="ruby_lintOption">cwT</string>
+  <string id="sassDefaultInterpreter">None</string>
   <boolean id="scrollEndAtLastLine">0</boolean>
   <long id="scrollWidth">2000</long>
   <boolean id="scrollWidthTracking">0</boolean>
-  <boolean id="select_most_recent_buffer_on_buffer_close">0</boolean>
+  <string id="scssDefaultInterpreter">None</string>
+  <boolean id="select_most_recent_buffer_on_buffer_close">1</boolean>
   <boolean id="showEOL">0</boolean>
   <boolean id="showLineNumbers">1</boolean>
   <boolean id="showWhitespace">1</boolean>
@@ -106,6 +122,7 @@
   <string id="tidy_configpath"></string>
   <string id="tidy_errorlevel">errors</string>
   <string id="userEnvironmentStartupOverride"></string>
+  <string id="vagrantBinary"></string>
   <long id="ySlop">5</long>
 </preference-set>
 </project>
