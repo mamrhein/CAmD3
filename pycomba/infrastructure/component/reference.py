@@ -58,30 +58,30 @@ class Reference(Component):
 
     """"""
 
-    __slots__ = ('_type', '_uid', '_ref')
+    __slots__ = ('_refobj_type', '_refobj_uid', '_refobj_ref')
 
     def __init__(self, obj: Component) -> None:
-        self._type = type(obj)
-        self._uid = UniqueIdentifier[obj]
-        self._ref = ref(obj)
+        self._refobj_type = type(obj)
+        self._refobj_uid = UniqueIdentifier[obj]
+        self._refobj_ref = ref(obj)
 
     @property
     def _obj(self):
-        obj = self._ref()
+        obj = self._refobj_ref()
         if obj is not None:
             return obj
-        return self._type[self._uid]
+        return self._refobj_type[self._refobj_uid]
 
     def __getattribute__(self, name):
         try:
             return super().__getattribute__(name)
         except AttributeError:
             pass
-        return getattr(self._obj, name)
+        return getattr(self._refobj_obj, name)
 
 
 def _ref2uid(ref: Reference) -> UniqueIdentifier:
-    return ref._uid
+    return ref._refobj_uid
 
 UniqueIdentifier.add_adapter(_ref2uid)
 
