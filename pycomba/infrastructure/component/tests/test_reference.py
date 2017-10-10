@@ -111,10 +111,14 @@ class ReferenceTest1(unittest.TestCase):
     def test_proxy(self):
         mybmw = self.mybmw
         self.assertRaises(TypeError, getattr, mybmw, 'make')
+        # add adapter that recreates 'Car' instance
         Car.add_adapter(uid2car)
+        # now 'Car' instance gets recreated
         self.assertEqual(mybmw.make, 'BMW')
         self.assertEqual(mybmw.wheels[WheelPosition.front_right].tire.size,
                          '18"')
+        # internal reference to recreated 'Car' instance renewed?
+        self.assertIsNotNone(mybmw._refobj_ref())
 
     # def tearDown(self):
     #     pass

@@ -68,9 +68,12 @@ class Reference(Component):
     @property
     def _obj(self):
         obj = self._refobj_ref()
-        if obj is not None:
-            return obj
-        return self._refobj_type[self._refobj_uid]
+        if obj is None:
+            # reconstruct obj
+            obj = self._refobj_type[self._refobj_uid]
+            # renew reference
+            self._refobj_ref = ref(obj)
+        return obj
 
     def __getattribute__(self, name):
         try:
