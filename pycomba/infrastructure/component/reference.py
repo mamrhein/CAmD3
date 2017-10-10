@@ -77,7 +77,7 @@ class Reference(Component):
             return super().__getattribute__(name)
         except AttributeError:
             pass
-        return getattr(self._refobj_obj, name)
+        return getattr(self._obj, name)
 
 
 def _ref2uid(ref: Reference) -> UniqueIdentifier:

@@ -104,9 +104,9 @@ class ReferenceTest1(unittest.TestCase):
 
     def test_constructor(self):
         mybmw = self.mybmw
-        self.assertIs(mybmw._type, Car)
-        self.assertIs(mybmw._uid, self.mybmw_id)
-        self.assertIsNone(mybmw._ref())
+        self.assertIs(mybmw._refobj_type, Car)
+        self.assertIs(mybmw._refobj_uid, self.mybmw_id)
+        self.assertIsNone(mybmw._refobj_ref())
 
     def test_proxy(self):
         mybmw = self.mybmw
