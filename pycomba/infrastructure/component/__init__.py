@@ -18,7 +18,7 @@
 
 
 from .attribute import AbstractAttribute, Attribute
-from .component import Component, implementer
+from .component import Component, implementer, UniqueIdentifier
 from .constraints import (LengthConstraint,
                           ValueConstraint, between, ge, gt, instance, is_int,
                           is_number, is_rational, le, length, lt, max_length,
@@ -35,6 +35,7 @@ __all__ = [
     # component
     'Component',
     'implementer',
+    'UniqueIdentifier',
     # constraints
     'LengthConstraint',
     'ValueConstraint',

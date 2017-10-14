@@ -12,10 +12,13 @@
 
 from abc import ABC
 from numbers import Number
-import unittest
 from typing import Tuple
+import unittest
+from uuid import uuid1
+
 from pycomba.infrastructure.component import (
-    Attribute, Component, ComponentLookupError, Immutable, implementer)
+    Attribute, Component, ComponentLookupError, Immutable, implementer,
+    UniqueIdentifier)
 from pycomba.infrastructure.component.component import _ABCSet, ComponentMeta
 
 
@@ -216,6 +219,20 @@ class ComponentMetaTest(unittest.TestCase):
         t3 = TestComp6(4, 9, 'y')
         for ct in (TestComp6, TestComp5, TestComp4):
             self.assertIs(ct.adapt(t3), t3)
+
+
+class UniqueIdentifierTest(unittest.TestCase):
+
+    def test_adapt(self):
+        obj = object()
+        self.assertRaises(TypeError, UniqueIdentifier.adapt, obj)
+        uid = uuid1()
+        self.assertIs(UniqueIdentifier[uid], uid)
+        obj = type('Obj', (), {})()
+        obj.id = 5
+        self.assertRaises(TypeError, UniqueIdentifier.adapt, obj)
+        obj.id = uid
+        self.assertIs(UniqueIdentifier[obj], uid)
 
 
 if __name__ == '__main__':

@@ -21,13 +21,14 @@
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from typing import (Any, Callable, Iterable, MutableMapping, Sequence, Tuple)
+from uuid import UUID
 # work-around for issue 29581:
 from _weakrefset import WeakSet
 
 # local imports
 from .attribute import Attribute
 from .exceptions import ComponentLookupError
-from .immutable import Immutable
+from .immutable import Immutable, immutable
 from .signature import _is_instance, _is_subclass, signature
 
 
@@ -237,7 +238,33 @@ def implementer(*interfaces: type) -> Callable[[type], type]:
     return _register_cls
 
 
+@immutable
+class UniqueIdentifier(Component):
+
+    """Abstract base class for (universally) unique identifiers"""
+
+    __slots__ = ()
+
+    @classmethod
+    def adapt(cls, obj: Any) -> 'UniqueIdentifier':
+        try:
+            return type(cls).adapt(cls, obj)
+        except TypeError as exc:
+            try:
+                id = obj.id
+            except AttributeError:
+                raise exc from None
+            try:
+                return type(cls).adapt(cls, id)
+            except TypeError:
+                raise exc from None
+
+
+UniqueIdentifier.register(UUID)
+
+
 __all__ = [
     'Component',
     'implementer',
+    'UniqueIdentifier',
 ]

@@ -18,40 +18,13 @@
 
 
 # standard library imports
-from typing import Any
-from uuid import UUID
 from weakref import ref
 
 # third-party imports
 
 
 # local imports
-from . import Component, immutable
-
-
-@immutable
-class UniqueIdentifier(Component):
-
-    """"""
-
-    __slots__ = ()
-
-    @classmethod
-    def adapt(cls, obj: Any) -> 'UniqueIdentifier':
-        try:
-            return type(cls).adapt(cls, obj)
-        except TypeError as exc:
-            try:
-                id = obj.id
-            except AttributeError:
-                raise exc from None
-            try:
-                return type(cls).adapt(cls, id)
-            except TypeError:
-                raise exc from None
-
-
-UniqueIdentifier.register(UUID)
+from . import Component, UniqueIdentifier
 
 
 class Reference(Component):

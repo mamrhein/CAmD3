@@ -64,34 +64,6 @@ def uid2car(id: UniqueIdentifier) -> Car:
     return Car(**Car._all_car_specs[id])
 
 
-class UniqueIdentifierTest1(unittest.TestCase):
-
-    def test_adapt(self):
-        obj = object()
-        self.assertRaises(TypeError, UniqueIdentifier.adapt, obj)
-        uid = uuid1()
-        self.assertIs(UniqueIdentifier[uid], uid)
-        obj = type('Obj', (), {})()
-        obj.id = 5
-        self.assertRaises(TypeError, UniqueIdentifier.adapt, obj)
-        obj.id = uid
-        self.assertIs(UniqueIdentifier[obj], uid)
-
-
-class UniqueIdentifierTest2(unittest.TestCase):
-
-    def setUp(self):
-        self.mybmw = Car(make="BMW", model="330i", type_of_rim=RimType.alu,
-                         tire=Tire("GoodYear", '18"'))
-
-    def test_adapt(self):
-        mybmw = self.mybmw
-        self.assertIs(UniqueIdentifier[mybmw], mybmw.id)
-
-    # def tearDown(self):
-    #     pass
-
-
 class ReferenceTest1(unittest.TestCase):
 
     def setUp(self):
