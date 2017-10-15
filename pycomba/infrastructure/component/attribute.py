@@ -52,49 +52,13 @@ class AbstractAttribute(metaclass=ABCMeta):
 
     __isabstractmethod__ = True
 
-    def __init__(self, immutable: bool = False, default: Any = _NODEFAULT,
-                 converter: Optional[ConverterType] = None,
-                 constraints: ContraintsParamType = None,
+    def __init__(self, *, immutable: bool = False,
                  doc: Optional[Text] = None) -> None:
         """Initialze attribute."""
         assert isinstance(immutable, bool), \
             "Argument 'immutable' must be of type 'bool'."
         self._immutable = immutable
-        assert converter is None or callable(converter), \
-            "Argument 'converter' must be callable."
-        self._converter = converter
-        self._constraints = constraints
-        if constraints is None:
-            self._bound_constraints = ()    # type: BoundContraintsType
-        elif callable(constraints):         # a single callable?
-            self._bound_constraints = (self._bind_constraint(
-                                       cast(ConstraintType, constraints)),)
-        else:                               # an iterable of callables
-            try:
-                it = iter(cast(Iterable[ConstraintType], constraints))
-            except TypeError:
-                it = None
-            assert it and all(callable(item) for item in it), \
-                "Argument 'constraints' must be a single callable or an " \
-                "iterable of callables."
-            self._bound_constraints = tuple((self._bind_constraint(func)
-                                             for func
-                                             in cast(Iterable[ConstraintType],
-                                                     constraints)))
-        self.default = default
         self.__doc__ = doc
-
-    def _bind_constraint(self, func: Callable[[Any], bool]) \
-            -> Callable[[Any], bool]:
-        def check(attr_value: Any) -> bool:
-            if not func(attr_value):
-                if func.__doc__:
-                    msg = func.__doc__.format(self.name)
-                else:
-                    msg = "Invalid value given for attribute '{}'.".format(
-                          self.name)
-                raise ValueError(msg)
-        return check
 
     @property
     def name(self) -> str:
@@ -127,6 +91,64 @@ class AbstractAttribute(metaclass=ABCMeta):
         "Return True if attribute can't be modified, otherwise False."
         return self._immutable
 
+    def _check_immutable(self, instance: object) -> None:
+        try:
+            getattr(instance, self._priv_member)
+        except AttributeError:
+            pass        # fall through
+        else:
+            if self._immutable or isinstance(instance, Immutable):
+                raise AttributeError("Can't modify immutable attribute '{}'."
+                                     .format(self._name))
+
+
+class Attribute(AbstractAttribute):
+
+    """Descriptor class for defining attributes of objects."""
+
+    __isabstractmethod__ = False
+
+    def __init__(self, *, immutable: bool = False, default: Any = _NODEFAULT,
+                 converter: Optional[ConverterType] = None,
+                 constraints: ContraintsParamType = None,
+                 doc: Optional[Text] = None) -> None:
+        """Initialze attribute."""
+        super().__init__(immutable=immutable, doc=doc)
+        assert converter is None or callable(converter), \
+            "Argument 'converter' must be callable."
+        self._converter = converter
+        self._constraints = constraints
+        if constraints is None:
+            self._bound_constraints = ()    # type: BoundContraintsType
+        elif callable(constraints):         # a single callable?
+            self._bound_constraints = (self._bind_constraint(
+                                       cast(ConstraintType, constraints)),)
+        else:                               # an iterable of callables
+            try:
+                it = iter(cast(Iterable[ConstraintType], constraints))
+            except TypeError:
+                it = None
+            assert it and all(callable(item) for item in it), \
+                "Argument 'constraints' must be a single callable or an " \
+                "iterable of callables."
+            self._bound_constraints = tuple((self._bind_constraint(func)
+                                             for func
+                                             in cast(Iterable[ConstraintType],
+                                                     constraints)))
+        self.default = default
+
+    def _bind_constraint(self, func: Callable[[Any], bool]) \
+            -> Callable[[Any], bool]:
+        def check(attr_value: Any) -> bool:
+            if not func(attr_value):
+                if func.__doc__:
+                    msg = func.__doc__.format(self.name)
+                else:
+                    msg = "Invalid value given for attribute '{}'.".format(
+                          self.name)
+                raise ValueError(msg)
+        return check
+
     @property
     def converter(self) -> ConverterType:
         """Callable used to adapt the value given in an assignment to the
@@ -138,16 +160,6 @@ class AbstractAttribute(metaclass=ABCMeta):
         """Callable(s) used to check the value(s) given in an assignment to
         the attribute."""
         return self._constraints
-
-    def _check_immutable(self, instance: object) -> None:
-        try:
-            getattr(instance, self._priv_member)
-        except AttributeError:
-            pass        # fall through
-        else:
-            if self._immutable or isinstance(instance, Immutable):
-                raise AttributeError("Can't modify immutable attribute '{}'."
-                                     .format(self._name))
 
     def _convert_value(self, value: Any) -> Any:
         try:
@@ -213,13 +225,6 @@ class AbstractAttribute(metaclass=ABCMeta):
             delattr(instance, self._priv_member)
         except AttributeError:
             pass
-
-
-class Attribute(AbstractAttribute):
-
-    """Descriptor class for defining attributes of objects."""
-
-    __isabstractmethod__ = False
 
 
 def _check_instance(meth):

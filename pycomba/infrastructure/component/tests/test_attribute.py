@@ -10,11 +10,13 @@
 # $Source$
 # $Revision$
 
-import unittest
+from abc import ABC
 from operator import delitem, setitem
+import unittest
+
 from pycomba.infrastructure.component.attribute import (
-    Attribute, MultiValueAttribute, QualifiedMultiValueAttribute, _NODEFAULT,
-    is_identifier)
+    AbstractAttribute, Attribute, MultiValueAttribute,
+    QualifiedMultiValueAttribute, _NODEFAULT, is_identifier)
 from pycomba.infrastructure.component.constraints import (
     is_number, non_negative, between)
 from pycomba.infrastructure.component.immutable import immutable
@@ -30,10 +32,30 @@ class HelperTest(unittest.TestCase):
 
 
 # helper to create class with attribute on the fly
-def create_cls(cls_name, attr_dict):
+def create_cls(cls_name, attr_dict, bases=(ABC,)):
     for name, attr in attr_dict.items():
         attr.__set_name__(None, name)
-    return type(str(cls_name), (), attr_dict)
+    return type(str(cls_name), bases, attr_dict)
+
+
+class AbstractAttributeTest(unittest.TestCase):
+
+    def test_constructor(self):
+        a = AbstractAttribute()
+        self.assertTrue(a.immutable is False)
+        self.assertIsNone(a.__doc__)
+        a = AbstractAttribute(immutable=True, doc='doc')
+        a.__set_name__(None, 'a')
+        self.assertEqual(a.name, 'a')
+        self.assertTrue(a.immutable is True)
+        self.assertEqual(a.__doc__, 'doc')
+        # no positional args
+        self.assertRaises(TypeError, AbstractAttribute, True)
+
+    def test_being_abstract(self):
+        a = AbstractAttribute()
+        Test = create_cls('Test', {'x': a})
+        self.assertRaises(TypeError, Test)
 
 
 class AttributeTest(unittest.TestCase):
@@ -50,6 +72,7 @@ class AttributeTest(unittest.TestCase):
         a = Attribute(immutable=True, default='5', converter=int,
                       constraints=is_number, doc='doc')
         a.__set_name__(None, 'a')
+        self.assertEqual(a.name, 'a')
         self.assertTrue(a.immutable is True)
         self.assertEqual(a.default, 5)
         self.assertTrue(a.converter is int)
@@ -57,7 +80,6 @@ class AttributeTest(unittest.TestCase):
         self.assertTrue(type(a._bound_constraints) is tuple)
         self.assertTrue(all(callable(c) for c in a._bound_constraints))
         self.assertEqual(a.__doc__, 'doc')
-        self.assertEqual(a.name, 'a')
         # default must be compatible to converter and must pass constraints
         self.assertRaises(TypeError, Attribute, converter=int,
                           default=object())
@@ -73,6 +95,8 @@ class AttributeTest(unittest.TestCase):
         # constaints must be a single callable or an iterable of callables
         self.assertRaises(AssertionError, Attribute, constraints=5)
         self.assertRaises(AssertionError, Attribute, constraints=(5, 'a'))
+        # no positional args
+        self.assertRaises(TypeError, Attribute, True)
 
     def test_name(self):
         a = Attribute()
