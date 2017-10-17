@@ -18,51 +18,123 @@
 
 
 # standard library imports
-from weakref import ref
+from abc import ABCMeta
+from typing import Any, Dict, Optional, Text, Tuple, Type
+from weakref import ref as WeakRef
 
 # third-party imports
 
 
 # local imports
-from . import Component, UniqueIdentifier
+from . import Component, Immutable, UniqueIdentifier
+from .attribute import AbstractAttribute
 
 
-class Reference(Component):
+class ReferenceMeta(ABCMeta):
 
-    """"""
+    """Metaclass for class `Reference`."""
 
-    __slots__ = ('_refobj_type', '_refobj_uid', '_refobj_ref')
-
-    def __init__(self, obj: Component) -> None:
-        self._refobj_type = type(obj)
-        self._refobj_uid = UniqueIdentifier[obj]
-        self._refobj_ref = ref(obj)
+    def __new__(mcls: Type, name: str, bases: Tuple[Type, ...],
+                namespace: Dict, ref_type: Optional[Type[Component]] = None) \
+            -> Type:
+        assert ref_type is None or issubclass(ref_type, Component), ref_type
+        new_cls = super().__new__(mcls, name, bases, namespace)
+        new_cls._ref_type = ref_type
+        return new_cls
 
     @property
-    def _obj(self):
-        obj = self._refobj_ref()
-        if obj is None:
-            # reconstruct obj
-            obj = self._refobj_type[self._refobj_uid]
-            # renew reference
-            self._refobj_ref = ref(obj)
-        return obj
+    def ref_type(cls) -> Optional[Type[Component]]:
+        return cls._ref_type
 
-    def __getattribute__(self, name):
+    def __getitem__(cls, ref_type: Type[Component]):
+        assert issubclass(ref_type, Component), ref_type
+        return type(cls)(cls.__name__,
+                         (cls,) + cls.__bases__,
+                         dict(cls.__dict__),
+                         ref_type=ref_type)
+
+    def __repr__(cls):
+        """repr(cls)"""
+        if cls.ref_type is None:
+            return f"{cls.__module__}.{cls.__qualname__}"
+        else:
+            return f"{cls.__module__}.{cls.__qualname__}[{cls.ref_type!r}]"
+
+
+class Reference(AbstractAttribute, metaclass=ReferenceMeta):
+
+    """Descriptor class for defining attributes of objects holding
+    references to components."""
+
+    __isabstractmethod__ = False
+
+    def __init__(self, immutable: bool = False,
+                 doc: Optional[Text] = None) -> None:
+        if self.ref_type is None:
+            raise TypeError(
+                f"Class '{self.__class__.__qualname__}' cannot be "
+                "instantiated.")
+        super().__init__(immutable=immutable, doc=doc)
+
+    # @classmethod
+    # def __subclasshook__(cls, subcls: type) -> bool:
+    #     # issubclass(Refrerence[T1], Reference[T2]) == issubclass(T1, T2)
+    #     if subcls.__base__ is Reference:
+    #         subcls_args = subcls.__args__
+    #         cls_args = cls.__args
+    #         if subcls_args:
+    #             if cls_args:
+    #                 return issubclass(subcls_args[0], cls_args[0])
+    #             else:
+    #                 return True
+    #         else:
+    #             return cls_args is None
+    #     return False
+
+    @property
+    def ref_type(self) -> Optional[Type[Component]]:
+        return self.__class__.ref_type
+
+    def __get__(self, instance: Any, owner: type) -> Component:
+        """Return referenced object."""
+        if instance is None:    # if accessed via class, return descriptor
+            return self         # (i.e. self),
+        else:                   # else return referenced object
+            try:
+                (uid, ref) = getattr(instance, self._priv_member)
+            except AttributeError:
+                raise AttributeError("Unassigned reference '{}'."
+                                     .format(self._name)) from None
+            obj = ref()
+            if obj is None:
+                # reconstruct obj
+                try:
+                    obj = self.ref_type[uid]
+                except TypeError:
+                    msg = (f"Can't reconstruct '{self.ref_type}' instance "
+                           "from id.")
+                    raise AttributeError(msg) from None
+                # renew reference
+                setattr(instance, self._priv_member, (uid, WeakRef(obj)))
+            return obj
+
+    def __set__(self, instance: object, value: Component) -> None:
+        """Set value of managed attribute to reference `value`."""
+        self._check_immutable(instance)
+        setattr(instance, self._priv_member,
+                (UniqueIdentifier[value], WeakRef(value)))
+
+    def __delete__(self, instance: object) -> None:
+        """Remove value of managed reference."""
+        if self._immutable or isinstance(instance, Immutable):
+            raise AttributeError("Can't delete immutable attribute '{}'."
+                                 .format(self._name))
         try:
-            return super().__getattribute__(name)
+            delattr(instance, self._priv_member)
         except AttributeError:
             pass
-        return getattr(self._obj, name)
 
 
-def _ref2uid(ref: Reference) -> UniqueIdentifier:
-    return ref._refobj_uid
-
-UniqueIdentifier.add_adapter(_ref2uid)
-
-
-def _ref2comp(ref: Reference) -> Component:
-    return ref._obj
-
-Component.add_adapter(_ref2comp)
+def ref(ref_type: Type[Component], *, immutable: bool = False,
+        doc: Optional[Text] = None) -> Reference[Component]:
+    return Reference[ref_type](immutable=immutable, doc=doc)
