@@ -46,12 +46,35 @@ class ReferenceMeta(ABCMeta):
     def ref_type(cls) -> Optional[Type[Component]]:
         return cls._ref_type
 
+    @property
+    def __origin__(cls):
+        if cls.ref_type is None:
+            return cls
+        return cls.__bases__[1]
+
     def __getitem__(cls, ref_type: Type[Component]):
         assert issubclass(ref_type, Component), ref_type
+        namespace = dict(cls.__dict__)
+        # remove slots
+        try:
+            slots = namespace['__slots__']
+        except KeyError:
+            pass
+        else:
+            for name in slots:
+                namespace.pop(name, None)
         return type(cls)(cls.__name__,
                          (cls,) + cls.__bases__,
-                         dict(cls.__dict__),
+                         namespace,
                          ref_type=ref_type)
+
+    def __subclasscheck__(cls, subcls: type) -> bool:
+        # issubclass(Refrerence[T1], Reference[T2]) == issubclass(T1, T2)
+        if cls.__origin__ in subcls.__mro__:
+            return cls.ref_type is None or (subcls.ref_type is not None and
+                                            issubclass(subcls.ref_type,
+                                                       cls.ref_type))
+        return False
 
     def __repr__(cls):
         """repr(cls)"""
@@ -75,21 +98,6 @@ class Reference(AbstractAttribute, metaclass=ReferenceMeta):
                 f"Class '{self.__class__.__qualname__}' cannot be "
                 "instantiated.")
         super().__init__(immutable=immutable, doc=doc)
-
-    # @classmethod
-    # def __subclasshook__(cls, subcls: type) -> bool:
-    #     # issubclass(Refrerence[T1], Reference[T2]) == issubclass(T1, T2)
-    #     if subcls.__base__ is Reference:
-    #         subcls_args = subcls.__args__
-    #         cls_args = cls.__args
-    #         if subcls_args:
-    #             if cls_args:
-    #                 return issubclass(subcls_args[0], cls_args[0])
-    #             else:
-    #                 return True
-    #         else:
-    #             return cls_args is None
-    #     return False
 
     @property
     def ref_type(self) -> Optional[Type[Component]]:

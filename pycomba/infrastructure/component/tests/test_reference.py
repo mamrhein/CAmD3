@@ -110,6 +110,28 @@ class ReferenceMetaTest(unittest.TestCase):
                           (Reference,), {}, ref_type=str)
         self.assertRaises(AssertionError, getitem, Reference, int)
 
+    def test_issubclass(self):
+        C1 = type("C1", (Component,), {})
+        C2 = type("C2", (C1,), {})
+        self.assertTrue(issubclass(C2, C1))
+        self.assertTrue(issubclass(Reference[C2], Reference[C1]))
+        self.assertTrue(issubclass(Reference[C1], Reference))
+        self.assertTrue(issubclass(Reference[C2], Reference))
+        self.assertTrue(issubclass(Reference, Reference))
+        self.assertFalse(issubclass(Reference, Reference[C1]))
+        self.assertFalse(issubclass(Reference, Reference[C2]))
+        self.assertFalse(issubclass(Reference[C1], Reference[C2]))
+        SubRef = type("SubRef", (Reference,), {})
+        self.assertTrue(issubclass(SubRef[C2], Reference[C1]))
+        self.assertTrue(issubclass(SubRef[C1], Reference))
+        self.assertTrue(issubclass(SubRef[C2], Reference))
+        self.assertTrue(issubclass(SubRef, Reference))
+        self.assertTrue(issubclass(SubRef, SubRef))
+        self.assertFalse(issubclass(Reference, SubRef))
+        self.assertFalse(issubclass(SubRef, Reference[C1]))
+        self.assertFalse(issubclass(SubRef, Reference[C2]))
+        self.assertFalse(issubclass(SubRef[C1], Reference[C2]))
+
     def test_repr(self):
         cls = Reference
         mod = cls.__module__
