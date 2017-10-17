@@ -12,13 +12,15 @@
 
 from enum import Enum
 import gc
+from operator import getitem
 import unittest
 from uuid import uuid1
 
 from pycomba.infrastructure.component import Component, UniqueIdentifier
 from pycomba.infrastructure.component.attribute import (
     Attribute, QualifiedMultiValueAttribute)
-from pycomba.infrastructure.component.reference import ref, Reference
+from pycomba.infrastructure.component.reference import (
+    ref, Reference, ReferenceMeta)
 
 
 class Tire(Component):
@@ -102,6 +104,11 @@ class ReferenceMetaTest(unittest.TestCase):
         self.assertIs(Garage.car1.ref_type, Car)
         self.assertFalse(Garage.car1.immutable)
         self.assertEqual(Garage.car1.__doc__, "Parked car.")
+
+    def test_getitem(self):
+        self.assertRaises(AssertionError, ReferenceMeta, 'Reference',
+                          (Reference,), {}, ref_type=str)
+        self.assertRaises(AssertionError, getitem, Reference, int)
 
     def test_repr(self):
         cls = Reference
