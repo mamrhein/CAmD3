@@ -220,6 +220,10 @@ class ComponentMetaTest(unittest.TestCase):
         for ct in (TestComp6, TestComp5, TestComp4):
             self.assertIs(ct.adapt(t3), t3)
 
+    def test_repr(self):
+        self.assertEqual(repr(TestComp3),
+                         '.'.join((__name__, TestComp3.__qualname__)))
+
 
 class UniqueIdentifierTest(unittest.TestCase):
 

@@ -214,6 +214,10 @@ class ComponentMeta(ABCMeta):
                                    "': no adapter for '" +
                                    repr(obj) + "' found.")
 
+    def __repr__(cls):
+        """repr(cls)"""
+        return f"{cls.__module__}.{cls.__qualname__}"
+
 
 class Component(metaclass=ComponentMeta):
 
