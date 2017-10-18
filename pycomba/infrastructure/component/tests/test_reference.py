@@ -23,6 +23,21 @@ from pycomba.infrastructure.component.reference import (
     ref, Reference, ReferenceMeta)
 
 
+class SubRef(Reference):
+
+    __slots__ = ('_a', '_b')
+
+
+class C1(Component):
+
+    pass
+
+
+class C2(C1):
+
+    pass
+
+
 class Tire(Component):
 
     make = Attribute(immutable=True)
@@ -104,6 +119,10 @@ class ReferenceMetaTest(unittest.TestCase):
         self.assertIs(Garage.car1.ref_type, Car)
         self.assertFalse(Garage.car1.immutable)
         self.assertEqual(Garage.car1.__doc__, "Parked car.")
+        SubRef_C1 = SubRef[C1]
+        self.assertIs(SubRef_C1.ref_type, C1)
+        self.assertIn('__slots__', SubRef_C1.__dict__)
+        self.assertEqual(SubRef_C1.__slots__, ('_a', '_b'))
 
     def test_getitem(self):
         self.assertRaises(AssertionError, ReferenceMeta, 'Reference',
@@ -111,8 +130,6 @@ class ReferenceMetaTest(unittest.TestCase):
         self.assertRaises(AssertionError, getitem, Reference, int)
 
     def test_issubclass(self):
-        C1 = type("C1", (Component,), {})
-        C2 = type("C2", (C1,), {})
         self.assertTrue(issubclass(C2, C1))
         self.assertTrue(issubclass(Reference[C2], Reference[C1]))
         self.assertTrue(issubclass(Reference[C1], Reference))
@@ -121,7 +138,6 @@ class ReferenceMetaTest(unittest.TestCase):
         self.assertFalse(issubclass(Reference, Reference[C1]))
         self.assertFalse(issubclass(Reference, Reference[C2]))
         self.assertFalse(issubclass(Reference[C1], Reference[C2]))
-        SubRef = type("SubRef", (Reference,), {})
         self.assertTrue(issubclass(SubRef[C2], Reference[C1]))
         self.assertTrue(issubclass(SubRef[C1], Reference))
         self.assertTrue(issubclass(SubRef[C2], Reference))
@@ -139,6 +155,9 @@ class ReferenceMetaTest(unittest.TestCase):
         cls = Reference[Car]
         self.assertEqual(repr(cls),
                          '.'.join((mod, 'Reference')) + f"[{repr(Car)}]")
+        cls = SubRef[C1]
+        self.assertEqual(repr(cls),
+                         '.'.join((__name__, 'SubRef')) + f"[{__name__}.C1]")
 
 
 class ReferenceTest1(unittest.TestCase):
