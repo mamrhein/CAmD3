@@ -13,6 +13,7 @@
 from enum import Enum
 import gc
 from operator import getitem
+from pickle import dumps, loads
 import unittest
 from uuid import uuid1
 
@@ -160,7 +161,7 @@ class ReferenceMetaTest(unittest.TestCase):
                          '.'.join((__name__, 'SubRef')) + f"[{__name__}.C1]")
 
 
-class ReferenceTest1(unittest.TestCase):
+class ReferenceTest(unittest.TestCase):
 
     def setUp(self):
         self.garage = garage = Garage()
@@ -177,13 +178,13 @@ class ReferenceTest1(unittest.TestCase):
         # car1 cannot be reconstructed, ...
         self.assertRaises(AttributeError, getattr, garage, 'car1')
         # ... but car2 can
-        self.assertIsNone(garage._car2[1]())
+        self.assertIsNone(garage._car2.ref())
         car2 = garage.car2
         self.assertEqual(car2.make, 'Moota')
         self.assertEqual(car2.wheels[WheelPosition.front_right].tire.size,
                          '17"')
         # internal reference to recreated 'Car' instance renewed?
-        self.assertIsNotNone(garage._car2[1]())
+        self.assertIsNotNone(garage._car2())
         # access to unassigned reference
         self.assertRaises(AttributeError, getattr, garage, 'car3')
 
@@ -202,6 +203,23 @@ class ReferenceTest1(unittest.TestCase):
         self.assertRaises(AttributeError, getattr, garage, 'car2')
         self.assertIsNone(delattr(garage, 'car2'))
         self.assertRaises(AttributeError, delattr, garage, 'car4')
+
+    def test_pickle(self):
+        p = dumps(self.garage)
+        garage = loads(p)
+        # uids rebuilt?
+        self.assertEqual(garage._car1.uid, self.garage._car1.uid)
+        self.assertEqual(garage._car2.uid, self.garage._car2.uid)
+        # car1 cannot be reconstructed, ...
+        self.assertRaises(AttributeError, getattr, garage, 'car1')
+        # ... but car2 can
+        self.assertIsNone(garage._car2.ref())
+        car2 = garage.car2
+        self.assertEqual(car2.make, 'Moota')
+        self.assertEqual(car2.wheels[WheelPosition.front_right].tire.size,
+                         '17"')
+        # internal reference to recreated 'Car' instance renewed?
+        self.assertIsNotNone(garage._car2())
 
     # def tearDown(self):
     #     pass

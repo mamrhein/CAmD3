@@ -48,7 +48,7 @@ class ReferenceMeta(ABCMeta):
 
     @property
     def __origin__(cls):
-        if cls.ref_type is None:
+        if cls._ref_type is None:
             return cls
         return cls.__bases__[1]
 
@@ -84,6 +84,35 @@ class ReferenceMeta(ABCMeta):
             return f"{cls.__module__}.{cls.__qualname__}[{cls.ref_type!r}]"
 
 
+class _Ref(Immutable):
+
+    """Helper class to store the privat state of references."""
+
+    __slots__ = ('_uid', '_ref')
+
+    def __init__(self, obj: Component) -> None:
+        self._uid = UniqueIdentifier[obj]
+        self._ref = WeakRef(obj)
+
+    @property
+    def uid(self):
+        return self._uid
+
+    @property
+    def ref(self):
+        return self._ref
+
+    def __call__(self):
+        return self._ref()
+
+    def __getstate__(self) -> Tuple:
+        return (self._uid,)
+
+    def __setstate__(self, state: Tuple) -> None:
+        self._uid = state[0]
+        self._ref = type(None)         # dummy weakref
+
+
 class Reference(AbstractAttribute, metaclass=ReferenceMeta):
 
     """Descriptor class for defining attributes of objects holding
@@ -109,12 +138,14 @@ class Reference(AbstractAttribute, metaclass=ReferenceMeta):
             return self         # (i.e. self),
         else:                   # else return referenced object
             try:
-                (uid, ref) = getattr(instance, self._priv_member)
+                ref = getattr(instance, self._priv_member)
             except AttributeError:
                 raise AttributeError("Unassigned reference '{}'."
                                      .format(self._name)) from None
+
             obj = ref()
             if obj is None:
+                uid = ref.uid
                 # reconstruct obj
                 try:
                     obj = self.ref_type[uid]
@@ -123,14 +154,13 @@ class Reference(AbstractAttribute, metaclass=ReferenceMeta):
                            "from id.")
                     raise AttributeError(msg) from None
                 # renew reference
-                setattr(instance, self._priv_member, (uid, WeakRef(obj)))
+                setattr(instance, self._priv_member, _Ref(obj))
             return obj
 
     def __set__(self, instance: object, value: Component) -> None:
         """Set value of managed attribute to reference `value`."""
         self._check_immutable(instance)
-        setattr(instance, self._priv_member,
-                (UniqueIdentifier[value], WeakRef(value)))
+        setattr(instance, self._priv_member, _Ref(value))
 
     def __delete__(self, instance: object) -> None:
         """Remove value of managed reference."""
