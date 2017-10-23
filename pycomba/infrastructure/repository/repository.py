@@ -44,26 +44,30 @@ class Repository(Component, Container, Sized):
                           "provide.")
 
     @abstractmethod
-    def add(entity: Entity) -> None:
+    def add(self, entity: Entity) -> None:
         """Add entity to the repository.
 
         This has no effect if entity is already present in the repository."""
 
     @abstractmethod
-    def remove(entity: Entity) -> None:
+    def remove(self, entity: Entity) -> None:
         """Remove entity from the repository.
 
         If entity is not present in the repository, raise a KeyError."""
 
     @abstractmethod
-    def find(spec: Specification) -> Iterable[Entity]:
+    def find(self, spec: Specification) -> Iterable[Entity]:
         """Find all entities in the repository which satisfy spec."""
 
     @abstractmethod
-    def get(entityId: Any) -> Entity:
+    def get(self, entityId: Any) -> Entity:
         """Get the entity with the given id.
 
         If no such entity is present in the repository, raise a KeyError."""
+
+    @abstractmethod
+    def __len__(self):
+        """len(self) -> number of entities contained in repository."""
 
 
 class InMemoryRepository(Repository):
@@ -78,25 +82,24 @@ class InMemoryRepository(Repository):
         """Add entity to the repository.
 
         This has no effect if entity is already present in the repository."""
-        _dict = self._dict
+        assert isinstance(entity, self._interface)
+        dict_ = self._dict
         key = entity.id
         try:
-            if _dict[key] is entity:
+            if dict_[key] is entity:
                 return
             raise DuplicateIdError
         except KeyError:
-            pass
-        assert(isinstance(entity, self.interface))
-        _dict[key] = entity
+            dict_[key] = entity
 
     def remove(self, entity: Entity) -> None:
         """Remove entity from the repository.
 
         If entity is not present in the repository, raise a KeyError."""
-        _dict = self._dict
+        dict_ = self._dict
         key = entity.id
-        if _dict[key] is entity:
-            del _dict[key]
+        if dict_[key] is entity:
+            del dict_[key]
         else:
             raise DuplicateIdError
 
