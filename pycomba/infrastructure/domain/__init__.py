@@ -17,7 +17,7 @@
 """Base classes for domain driven design"""
 
 
-from .domain import AggregateRoot, Entity, ValueObject
+from .domain import Entity, ValueObject
 from .idfactories import (IDGenerator,
                           local_id_generator, LocalIDGeneratorFactory,
                           local_num_id_generator, LocalNumIDGeneratorFactory,
@@ -26,7 +26,6 @@ from .idfactories import (IDGenerator,
 
 __all__ = [
     #domain
-    'AggregateRoot',
     'Entity',
     'ValueObject',
     # idfactories

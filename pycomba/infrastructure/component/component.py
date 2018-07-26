@@ -233,12 +233,10 @@ class Component(metaclass=ComponentMeta):
 def implementer(*interfaces: type) -> Callable[[type], type]:
     """Class decorator registering a class that implements the given
     interfaces."""
-
     def _register_cls(cls: type) -> type:
         for interface in interfaces:
             interface.register(cls)
         return cls
-
     return _register_cls
 
 

@@ -17,11 +17,19 @@ from pickle import dumps, loads
 import unittest
 from uuid import uuid1
 
-from pycomba.infrastructure.component import Component, UniqueIdentifier
+from pycomba.infrastructure.component import (
+    Component, register_utility, UniqueIdentifier)
 from pycomba.infrastructure.component.attribute import (
     Attribute, QualifiedMultiValueAttribute)
 from pycomba.infrastructure.component.reference import (
-    ref, Reference, ReferenceMeta)
+    ref, Reference, ReferenceMeta, UniqueIdAttribute)
+from pycomba.infrastructure.domain import UUIDGenerator, uuid_generator
+
+
+# factory for UUIDs
+def custom_uuid_generator() -> UUIDGenerator:
+    while True:
+        yield uuid1()
 
 
 class SubRef(Reference):
@@ -68,6 +76,7 @@ WheelPosition = Enum('WheelPosition',
 
 class Car(Component):
 
+    id = UniqueIdAttribute(uid_gen=uuid_generator())
     make = Attribute(immutable=True)
     model = Attribute(immutable=True)
     wheels = QualifiedMultiValueAttribute(WheelPosition)
@@ -75,7 +84,6 @@ class Car(Component):
     def __init__(self, make: str, model: str, type_of_rim: RimType,
                  tire: Tire):
         super().__init__(self)
-        self.id = uuid1()
         self.make = make
         self.model = model
         self.wheels = {pos: Wheel(type_of_rim, tire)
@@ -221,8 +229,41 @@ class ReferenceTest(unittest.TestCase):
         # internal reference to recreated 'Car' instance renewed?
         self.assertIsNotNone(garage._car2())
 
-    # def tearDown(self):
-    #     pass
+
+class ExplID(Component):
+
+    id = UniqueIdAttribute(uid_gen=custom_uuid_generator())
+
+    def __init__(self):
+        pass
+
+
+class ImplID(Component):
+
+    id = UniqueIdAttribute()
+
+    def __init__(self):
+        pass
+
+
+class UniqueIdAttributeTest(unittest.TestCase):
+
+    def setUp(self):
+        register_utility(uuid_generator(), UUIDGenerator)
+        self.cid = ImplID()
+
+    def testLazyInit(self):
+        cid = ImplID()
+        self.assertRaises(AttributeError, getattr, cid, '_id')
+        self.assertIsNotNone(cid.id)
+        self.assertIsNotNone(cid._id)
+
+    def testUniqueness(self):
+        ids = {self.cid.id}
+        for i in range(10):
+            cid = ExplID()
+            self.assertNotIn(cid.id, ids)
+            ids.add(cid.id)
 
 
 if __name__ == '__main__':                              # pragma: no cover

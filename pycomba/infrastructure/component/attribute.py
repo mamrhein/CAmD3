@@ -101,6 +101,27 @@ class AbstractAttribute(metaclass=ABCMeta):
                 raise AttributeError("Can't modify immutable attribute '{}'."
                                      .format(self._name))
 
+    def __get__(self, instance: Any, owner: type) -> Any:
+        """Return value of managed attribute."""
+        if instance is None:    # if accessed via class, return descriptor
+            return self         # (i.e. self),
+        else:                   # else raise exception
+            raise NotImplementedError
+
+    def __set__(self, instance: object, value: Any) -> None:
+        """Set value of managed attribute."""
+        if instance is None:    # if accessed via class, return descriptor
+            return self         # (i.e. self),
+        else:                   # else raise exception
+            raise AttributeError(f"Can't set attribute '{self._name}'.")
+
+    def __delete__(self, instance: object) -> None:
+        """Remove value of managed attribute."""
+        if instance is None:    # if accessed via class, return descriptor
+            return self         # (i.e. self),
+        else:                   # else raise exception
+            raise AttributeError(f"Can't delete attribute '{self._name}'.")
+
 
 class Attribute(AbstractAttribute):
 

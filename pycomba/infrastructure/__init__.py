@@ -20,7 +20,7 @@
 from .component import (AbstractAttribute, Attribute, Component, Immutable,
                         immutable, implementer, get_utility,
                         register_factory, register_utility)
-from .domain import AggregateRoot, Entity, ValueObject
+from .domain import Entity, ValueObject
 
 
 __all__ = [
@@ -35,7 +35,6 @@ __all__ = [
     'register_factory',
     'register_utility',
     # domain
-    'AggregateRoot',
     'Entity',
     'ValueObject',
 ]

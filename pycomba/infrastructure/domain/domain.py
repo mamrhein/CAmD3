@@ -15,11 +15,11 @@
 
 """Base classes for domain driven design"""
 
-from abc import abstractmethod
+# standard lib imports
 from typing import Any, Tuple
-from .idfactories import UUIDGenerator
-from ..component import (AbstractAttribute, Attribute, Component, get_utility,
-                         Immutable)
+
+# local imports
+from ..component import (AbstractAttribute, Component, Immutable)
 from ...gbbs.tools import all_slot_attrs
 
 
@@ -43,25 +43,6 @@ class Entity(Component):
     def __hash__(self) -> int:
         """hash(self)"""
         return id(self)
-
-
-class AggregateRoot(Entity):
-
-    """Abstract base class for aggregate roots.
-
-    An AggregateRoot is an entity with globally unique identity. It may
-    contain ('aggregate') other entities which are unique within the
-    aggregate."""
-
-    id = Attribute(immutable=True,
-                   doc="Attribute representing the identity of the aggregate."
-                   )
-
-    @abstractmethod
-    def __init__(self, *args, **kwds) -> None:
-        super().__init__(self, *args, **kwds)
-        uuidGen = get_utility(UUIDGenerator)
-        self._id = next(uuidGen)
 
 
 class ValueObject(Component, Immutable):

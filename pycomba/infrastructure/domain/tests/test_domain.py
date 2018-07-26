@@ -11,15 +11,18 @@
 # $Revision$
 
 from copy import copy
+from enum import Enum
 import unittest
 from uuid import UUID
-from pycomba.infrastructure import register_factory
+
+from pycomba.infrastructure import register_utility
 from pycomba.infrastructure import Attribute
-from pycomba.infrastructure.domain import (Entity,
-                                           AggregateRoot,
-                                           ValueObject,
-                                           uuid_generator,
-                                           UUIDGenerator)
+from pycomba.infrastructure.component import UniqueIdentifier
+from pycomba.infrastructure.component.attribute import (
+    QualifiedMultiValueAttribute)
+from pycomba.infrastructure.component.reference import UniqueIdAttribute
+from pycomba.infrastructure.domain import (
+    Entity, ValueObject, UUIDGenerator, uuid_generator)
 
 
 # --- Entity ---
@@ -69,9 +72,11 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(e1, e1)
 
 
-# --- AggregateRoot ---
+# --- Aggregate root ---
 
-class TestAggregate(AggregateRoot):
+class TestAggregate(Entity):
+
+    id = UniqueIdAttribute()
 
     def __init__(self, *args, **kwds):
         super().__init__(self, *args, **kwds)
@@ -80,17 +85,85 @@ class TestAggregate(AggregateRoot):
 class AggregateRootTest(unittest.TestCase):
 
     def setUp(self):
-        # register UUID generator factory
-        register_factory(uuid_generator)
+        register_utility(uuid_generator(), UUIDGenerator)
 
     def test_constructor(self):
         nIds = 10
-        dict_ = {}
+        ids = set()
         for id in range(nIds):
             entity = TestAggregate()
-            self.assertTrue(isinstance(entity.id, UUID))
-            dict_[entity.id] = entity
-        self.assertEqual(len(dict_), nIds)
+            self.assertIs(UniqueIdentifier[entity], entity.id)
+            ids.add(entity.id)
+        self.assertEqual(len(ids), nIds)
+
+
+# --- Embedding ---
+
+class Tire(Entity):
+
+    id = UniqueIdAttribute()
+    make = Attribute()
+    size = Attribute()
+
+    def __init__(self, make: str, size: str) -> None:
+        self.make = make
+        self.size = size
+
+
+RimType = Enum('RimType', ('alu', 'steel'))
+
+
+class Wheel(Entity):
+
+    id = UniqueIdAttribute()
+    type_of_rim = Attribute(immutable=True)
+    tire = Attribute(default=None)
+
+    def __init__(self, type_of_rim: RimType, tire: Tire = None) -> None:
+        self.type_of_rim = type_of_rim
+        self.tire = tire
+
+
+WheelPosition = Enum('WheelPosition',
+                     ('front_left', 'front_right', 'rear_left', 'rear_right'))
+
+
+class Car(Entity):
+
+    id = UniqueIdAttribute()
+    make = Attribute()
+    model = Attribute()
+    wheels = QualifiedMultiValueAttribute(WheelPosition)
+
+    def __init__(self, make: str, model: str):
+        super().__init__(self)
+        self.make = make
+        self.model = model
+
+
+class AggregateTest(unittest.TestCase):
+
+    def setUp(self):
+        self.car = Car('Gaudi', 'X7')
+
+    def testNestedAccess(self):
+        car = self.car
+        # no wheels yet
+        self.assertRaises(AttributeError, getattr, car, 'wheels')
+        # let's get some
+        front_tire = Tire('FireStone', '18"')
+        rear_tire = Tire('BridgeStone', '20"')
+        car.wheels = {
+            WheelPosition.front_left: Wheel(RimType.alu, front_tire),
+            WheelPosition.front_right: Wheel(RimType.alu, front_tire),
+            WheelPosition.rear_left: Wheel(RimType.alu, rear_tire),
+            WheelPosition.rear_right: Wheel(RimType.alu, rear_tire)
+        }
+        # nested access
+        self.assertEqual(car.wheels[WheelPosition.front_right].tire.size,
+                         '18"')
+        self.assertEqual(car.wheels[WheelPosition.rear_right].tire.make,
+                         'BridgeStone')
 
 
 # --- ValueObject ---
