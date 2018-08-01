@@ -1,0 +1,10 @@
+[run]
+omit =
+    *test_*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    return NotImplemented
+    if __name__ == .__main__.:
