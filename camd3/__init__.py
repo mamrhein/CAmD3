@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
 # Name:        __init__
-# Purpose:     PYthon COMponents for Business Applications
+# Purpose:     Component Architecture meets Domain Driven Design
 #
 # Author:      Michael Amrhein (michael@adrhinum.de)
 #
@@ -14,4 +14,4 @@
 # $Revision$
 
 
-"""PYthon COMponents for Business Applications"""
+"""Component Architecture meets Domain Driven Design"""
