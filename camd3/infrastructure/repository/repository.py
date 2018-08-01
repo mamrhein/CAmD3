@@ -22,10 +22,12 @@ from abc import abstractmethod
 from collections import Container, Sized
 from typing import Any, Iterable
 
+# third-party imports
+from specification import Specification
+
 # local imports
 from ..component import Attribute, Component, subclass
 from ..domain import Entity
-from ..specification import Specification
 
 
 class DuplicateIdError(Exception):
