@@ -53,13 +53,12 @@ class Prospect(Person):
         self.interests = interests
 
 
-class InMemoryRepositoryTest(unittest.TestCase):
+class RepositoryTest:
 
-    # def setUp(self):
-    #    pass
+    """Mix-in for Repository tests"""
 
     def test_add(self):
-        repo = InMemoryRepository(Person)
+        repo = self.repo(Person)
         p1 = Person('Hans', 'Berlinger', date(1982, 12, 3))
         self.assertIsNone(repo.add(p1))
         self.assertIsNone(repo.add(p1))
@@ -73,7 +72,7 @@ class InMemoryRepositoryTest(unittest.TestCase):
         self.assertRaises(AssertionError, repo.add, dummy)
 
     def test_remove(self):
-        repo = InMemoryRepository(Person)
+        repo = self.repo(Person)
         p1 = Person('Hans', 'Berlinger', date(1982, 12, 3))
         self.assertIsNone(repo.add(p1))
         self.assertEqual(len(repo), 1)
@@ -85,7 +84,7 @@ class InMemoryRepositoryTest(unittest.TestCase):
         self.assertEqual(len(repo), 0)
 
     def test_get(self):
-        repo = InMemoryRepository(Person)
+        repo = self.repo(Person)
         p1 = Person('Hans', 'Berlinger', date(1982, 12, 3))
         self.assertIsNone(repo.add(p1))
         self.assertIs(repo.get(p1.id), p1)
@@ -95,7 +94,7 @@ class InMemoryRepositoryTest(unittest.TestCase):
         self.assertIs(repo.get(p3.id), p3)
 
     def test_contains(self):
-        repo = InMemoryRepository(Person)
+        repo = self.repo(Person)
         p1 = Person('Hans', 'Berlinger', date(1982, 12, 3))
         self.assertNotIn(p1, repo)
         self.assertIsNone(repo.add(p1))
@@ -104,7 +103,7 @@ class InMemoryRepositoryTest(unittest.TestCase):
         self.assertNotIn(p2, repo)
 
     def test_find(self):
-        repo = InMemoryRepository(Person)
+        repo = self.repo(Person)
         p1 = Person('Hans', 'Berlinger', date(1982, 12, 3))
         self.assertIsNone(repo.add(p1))
         p2 = Person('Bert', 'Berlinger', date(1962, 2, 14))
@@ -117,6 +116,12 @@ class InMemoryRepositoryTest(unittest.TestCase):
         self.assertEqual(len(res), 2)
         self.assertIn(p1, res)
         self.assertIn(p3, res)
+
+
+class InMemoryRepositoryTest(unittest.TestCase, RepositoryTest):
+
+    def setUp(self):
+        self.repo = lambda iface: InMemoryRepository(iface)
 
     # def tearDown(self):
     #    pass
