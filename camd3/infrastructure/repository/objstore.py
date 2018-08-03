@@ -31,6 +31,8 @@ from ..component import Component, implementer
 @implementer(Container, Sized)
 class ObjectStore(Component):
 
+    """Abstract base class for object stores"""
+
     __slots__ = ()
 
     def __contains__(self, key):
@@ -56,3 +58,8 @@ class ObjectStore(Component):
     def __delitem__(self, key):                         # pragma: no cover
         """del self[key]"""
         raise KeyError
+
+    @abstractmethod
+    def __len__(self):                                  # pragma: no cover
+        """len(self)"""
+        raise NotImplementedError

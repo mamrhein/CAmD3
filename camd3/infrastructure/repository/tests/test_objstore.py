@@ -88,6 +88,18 @@ class ObjstoreTest(unittest.TestCase):
         self.assertEqual(p1, p2)
         self.assertEqual(p1.interests, p2.interests)
 
+    def test_del_item(self):
+        objstore = self.objstore
+        p = PERSONS[1]
+        del objstore[p.id]
+        self.assertNotIn(p.id, objstore)
+        # insert again in order to restore initial state
+        objstore[p.id] = p
+
+    def test_len(self):
+        objstore = self.objstore
+        self.assertEqual(len(objstore), len(PERSONS))
+
     def tearDown(self):
         self.objstore.close()
 
