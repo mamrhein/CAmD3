@@ -388,12 +388,54 @@ class MultiValueAttributeTest(unittest.TestCase):
         t.x = {4, 70}
         self.assertEqual(t.x, {4, 70})
         self.assertEqual(t.y, {8, 140})
+        del t.x         # reset to default
+        self.assertEqual(t.x, {17})
+        self.assertEqual(t.y, {34})
+        t.x.add(7)
+        self.assertEqual(t.x, {7, 17})
+        self.assertEqual(t.y, {14, 34})
         t.y = {3}
         self.assertEqual(t.y, {3})
-        del t.y
-        self.assertEqual(t.y, {8, 140})
+        del t.x         # reset to default
+        self.assertEqual(t.y, {3})
+        del t.y         # reset to default
+        self.assertEqual(t.x, {17})
+        self.assertEqual(t.y, {34})
+        t.x.discard(17)
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x.pop()
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x.clear()
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x.remove(17)
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x.update((2, 9))
+        self.assertEqual(t.x, {2, 9, 17})
+        del t.x         # reset to default
+        t.x |= {2, 9}
+        self.assertEqual(t.x, {2, 9, 17})
+        del t.x         # reset to default
+        t.x.intersection_update({2, 9})
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x &= {2, 9}
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x.difference_update({2, 9})
+        self.assertEqual(t.x, {17})
+        del t.x         # reset to default
+        t.x -= {17}
+        self.assertEqual(t.x, set())
+        del t.x         # reset to default
+        t.x.symmetric_difference_update({2, 9, 17})
+        self.assertEqual(t.x, {2, 9})
         self.assertIsNone(t.y._instance)
-        # can't modify default
+        # can't modify callable default
+        self.assertIsNone(t.y._instance)
         self.assertRaises(AttributeError, t.y.add, 2)
         self.assertRaises(AttributeError, t.y.discard, 8)
         self.assertRaises(AttributeError, t.y.clear)

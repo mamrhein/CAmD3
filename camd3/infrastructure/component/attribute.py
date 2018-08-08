@@ -69,6 +69,9 @@ class AbstractAttribute(metaclass=ABCMeta):
             return '<unnamed>'
 
     def __set_name__(self, owner: type, name: str) -> None:
+        """Set the name of the attribute as well as the name of the
+        private member.
+        """
         try:
             my_name = self._name
         except AttributeError:
@@ -88,7 +91,7 @@ class AbstractAttribute(metaclass=ABCMeta):
 
     @property
     def immutable(self) -> bool:
-        "Return True if attribute can't be modified, otherwise False."
+        """Return True if attribute can't be modified, otherwise False."""
         return self._immutable
 
     def _check_immutable(self, instance: object) -> None:
@@ -248,16 +251,23 @@ class Attribute(AbstractAttribute):
             pass
 
 
-def _check_instance(meth):
-    def checker(self, *args, **kwds):
+def _set_attr(meth):
+    def setter(self, *args, **kwds):
+        # check instance
         if self._instance is None:
             raise AttributeError("Can't modify default value.")
         if self._immutable:
             raise AttributeError("Can't modify immutable attribute '{}'."
                                  .format(self._attr.name))
-        return meth(self, *args, **kwds)
-    checker.__doc__ = meth.__doc__
-    return checker
+        # call decorated method
+        res = meth(self, *args, **kwds)
+        # re-assign self to the managed attribute of instance
+        self._attr.__set__(self._instance, self)
+        # return result of decorated method
+        return res
+    # copy doc string of decorated method
+    setter.__doc__ = meth.__doc__
+    return setter
 
 
 def _convert_n_check_value(meth):
@@ -292,35 +302,35 @@ class _MultiValue(set):
         super().__init__((check(convert(value)) for value in values))
 
     # add(elem)
-    add = _check_instance(_convert_n_check_value(set.add))
+    add = _set_attr(_convert_n_check_value(set.add))
     # discard(elem)
-    discard = _check_instance(_convert_n_check_value(set.discard))
+    discard = _set_attr(_convert_n_check_value(set.discard))
     # clear()
-    clear = _check_instance(set.clear)
+    clear = _set_attr(set.clear)
     # pop()
-    pop = _check_instance(set.pop)
+    pop = _set_attr(set.pop)
     # remove(elem)
-    remove = _check_instance(_convert_n_check_value(set.remove))
+    remove = _set_attr(_convert_n_check_value(set.remove))
     # update(*others)
-    update = _check_instance(_convert_n_check_value_sets(set.update))
+    update = _set_attr(_convert_n_check_value_sets(set.update))
     # self |= other | ...
-    __ior__ = _check_instance(_convert_n_check_value_sets(set.__ior__))
+    __ior__ = _set_attr(_convert_n_check_value_sets(set.__ior__))
     # intersection_update(*others)
     intersection_update = \
-        _check_instance(_convert_n_check_value_sets(set.intersection_update))
+        _set_attr(_convert_n_check_value_sets(set.intersection_update))
     # self &= other & ...
-    __iand__ = _check_instance(_convert_n_check_value_sets(set.__iand__))
+    __iand__ = _set_attr(_convert_n_check_value_sets(set.__iand__))
     # difference_update(*others)
     difference_update = \
-        _check_instance(_convert_n_check_value_sets(set.difference_update))
+        _set_attr(_convert_n_check_value_sets(set.difference_update))
     # self -= other | ...
-    __isub__ = _check_instance(_convert_n_check_value_sets(set.__isub__))
+    __isub__ = _set_attr(_convert_n_check_value_sets(set.__isub__))
     # symmetric_difference_update(other)
     symmetric_difference_update = \
-        _check_instance(_convert_n_check_value_sets(
-                        set.symmetric_difference_update))
+        _set_attr(_convert_n_check_value_sets
+                  (set.symmetric_difference_update))
     # self ^= other
-    __ixor__ = _check_instance(_convert_n_check_value_sets(set.__ixor__))
+    __ixor__ = _set_attr(_convert_n_check_value_sets(set.__ixor__))
 
     def __repr__(self) -> str:
         """repr(self)"""
@@ -353,6 +363,20 @@ class MultiValueAttribute(Attribute):
             # wrap default into a _MultiValue
             self._default = _MultiValue(self, None, default)
 
+    def __get__(self, instance: Any, owner: type) -> Any:
+        """Return value of managed attribute."""
+        if instance is None:    # if accessed via class, return descriptor
+            return self         # (i.e. self),
+        else:                   # else return value of storage attribute ...
+            multi_val = super().__get__(instance, owner)
+            if multi_val is self._default:
+                # associate default with instance
+                # TODO: optimize -> use copy of default (the values do not
+                # need to be checked by __init__ again)
+                return _MultiValue(self, instance, multi_val)
+            else:
+                return multi_val
+
     def __set__(self, instance: object, values: Iterable) -> None:
         """Set values of managed multi-value attribute."""
         self._check_immutable(instance)
@@ -381,23 +405,23 @@ class _QualifiedMultiValue(dict):
                           for (key, value) in it))
 
     # __setitem__(key, value, /)
-    @_check_instance
+    @_set_attr
     def __setitem__(self, key, value):
         attr = self._attr
         super().__setitem__(attr._check_key(key),
                             attr._check_value(attr._convert_value(value)))
 
     # __delitem__(key, /)
-    __delitem__ = _check_instance(dict.__delitem__)
+    __delitem__ = _set_attr(dict.__delitem__)
     # pop(key[, default])
-    pop = _check_instance(dict.pop)
+    pop = _set_attr(dict.pop)
     # popitem()
-    popitem = _check_instance(dict.popitem)
+    popitem = _set_attr(dict.popitem)
     # clear()
-    clear = _check_instance(dict.clear)
+    clear = _set_attr(dict.clear)
 
     # update([other], **kwds)
-    @_check_instance
+    @_set_attr
     def update(self, other, **kwds):
         attr = self._attr
         check_key, convert, check_value = (attr._check_key,
@@ -411,7 +435,7 @@ class _QualifiedMultiValue(dict):
                         for (key, value) in it))
 
     # setdefault(key[, default])
-    @_check_instance
+    @_set_attr
     def setdefault(self, key, default=None):
         attr = self._attr
         return super().setdefault(attr._check_key(key),
@@ -465,6 +489,20 @@ class QualifiedMultiValueAttribute(Attribute):
         else:
             # wrap default into a _QualifiedMultiValue
             self._default = _QualifiedMultiValue(self, None, default)
+
+    def __get__(self, instance: Any, owner: type) -> Any:
+        """Return value of managed attribute."""
+        if instance is None:    # if accessed via class, return descriptor
+            return self         # (i.e. self),
+        else:                   # else return value of storage attribute ...
+            multi_val = super().__get__(instance, owner)
+            if multi_val is self._default:
+                # associate default with instance
+                # TODO: optimize -> use copy of default (the values do not
+                # need to be checked by __init__ again)
+                return _QualifiedMultiValue(self, instance, multi_val)
+            else:
+                return multi_val
 
     def __set__(self, instance: object, values: Union[Iterable, Mapping]) \
             -> None:
