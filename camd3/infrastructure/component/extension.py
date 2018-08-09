@@ -34,6 +34,7 @@ class Extension(Component):
 
     @classmethod
     def __init_subclass__(cls, **kwds: Any) -> None:
+        """Set-up adapter for sub-class."""
         meth = cls.get_from                 # # get bound method 'get_from'
         if 'get_from' in cls.__dict__:      # if 'get_from' defined in cls,
             adapter = meth                  # we can use it as adapter,
@@ -103,6 +104,9 @@ class StateExtension(Extension):
 
     @classmethod
     def __init_subclass__(cls, **kwds: Any) -> None:
+        """Set-up the key under which the extensions instance is stored.
+
+        Extends Extension.__init_subclass."""
         key = kwds.pop('key', None)
         super().__init_subclass__(**kwds)
         if key is None:
@@ -132,6 +136,9 @@ class TransientExtension(Extension):
 
     @classmethod
     def __init_subclass__(cls, **kwds: Any) -> None:
+        """Set-up the mapping which contains the extensions instance.
+
+        Extends Extension.__init_subclass."""
         obj_map = kwds.pop('obj_map', None)
         super().__init_subclass__(**kwds)
         if obj_map is None:
