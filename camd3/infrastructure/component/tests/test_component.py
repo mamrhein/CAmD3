@@ -10,6 +10,10 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module component"""
+
+
 from abc import ABC
 from numbers import Number
 from typing import Tuple
@@ -58,11 +62,11 @@ class TestComp1Factory:
         return TestImpl()
 
 
-def Number2TestComp1(i: Number) -> TestComp1:
+def Number2TestComp1(i: Number) -> TestComp1:                   # noqa: D103
     return TestImpl()
 
 
-def Str2TestComp2(s: str) -> TestComp2:
+def Str2TestComp2(s: str) -> TestComp2:                         # noqa: D103
     return TestImpl()
 
 
@@ -74,7 +78,7 @@ class TestABC(ABC):
 class TestComp3(Component):
     """TestComp3"""
 
-    def __init_subclass__(subcls, **kwds):
+    def __init_subclass__(subcls, **kwds):                      # noqa: D105
         try:
             param = kwds.pop('param')
         except KeyError:
@@ -109,11 +113,11 @@ class TestComp6(TestComp5):
         self.c = c
 
 
-def Obj2TestComp6(obj: object) -> TestComp6:
+def Obj2TestComp6(obj: object) -> TestComp6:                   # noqa: D103
     return TestComp6(obj, None, None)
 
 
-def Tuple2TestComp6(tpl: Tuple[int, int, str]) -> TestComp6:
+def Tuple2TestComp6(tpl: Tuple[int, int, str]) -> TestComp6:   # noqa: D103
     return TestComp6(*tpl)
 
 
