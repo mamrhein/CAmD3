@@ -10,6 +10,10 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module attribute"""
+
+
 from abc import ABC
 from operator import delitem, setitem
 import unittest
@@ -32,7 +36,7 @@ class HelperTest(unittest.TestCase):
 
 
 # helper to create class with attribute on the fly
-def create_cls(cls_name, attr_dict, bases=(ABC,)):
+def create_cls(cls_name, attr_dict, bases=(ABC,)):              # noqa: D103
     for name, attr in attr_dict.items():
         attr.__set_name__(None, name)
     return type(str(cls_name), bases, attr_dict)
@@ -433,22 +437,17 @@ class MultiValueAttributeTest(unittest.TestCase):
         del t.x         # reset to default
         t.x.symmetric_difference_update({2, 9, 17})
         self.assertEqual(t.x, {2, 9})
-        self.assertIsNone(t.y._instance)
-        # can't modify callable default
-        self.assertIsNone(t.y._instance)
-        self.assertRaises(AttributeError, t.y.add, 2)
-        self.assertRaises(AttributeError, t.y.discard, 8)
-        self.assertRaises(AttributeError, t.y.clear)
-        self.assertRaises(AttributeError, t.y.pop)
-        self.assertRaises(AttributeError, t.y.remove, 8)
-        self.assertRaises(AttributeError, t.y.update, (2, 9))
-        self.assertRaises(AttributeError, t.y.__ior__, {2, 9})
-        self.assertRaises(AttributeError, t.y.intersection_update, {2, 9})
-        self.assertRaises(AttributeError, t.y.__iand__, {2, 9})
-        self.assertRaises(AttributeError, t.y.difference_update, {2, 9})
-        self.assertRaises(AttributeError, t.y.__isub__, {2, 9})
-        self.assertRaises(AttributeError,
-                          t.y.symmetric_difference_update, {2, 9})
+        self.assertEqual(t.y, {4, 18})
+        # callable default also linked to instance
+        self.assertIs(t.y._instance, t.x._instance)
+        # modifying default does fix the attribute value
+        t.y.add(2)
+        self.assertEqual(t.y, {2, 4, 18})
+        t.x = set()
+        self.assertEqual(t.y, {2, 4, 18})
+        # deleting the attribute value restores the default
+        del t.y
+        self.assertEqual(t.y, set())
 
     def test_converter(self):
         a = MultiValueAttribute(converter=str)
@@ -648,15 +647,16 @@ class QualifiedMultiValueAttributeTest(unittest.TestCase):
         self.assertEqual(t.y, {'a': 3})
         del t.y
         self.assertEqual(t.y, {'a': 8, 'b': 140})
-        self.assertIsNone(t.y._instance)
-        # can't modify default
-        self.assertRaises(AttributeError, setitem, t.y, 'a', 2)
-        self.assertRaises(AttributeError, delitem, t.y, 'a')
-        self.assertRaises(AttributeError, t.y.pop, 'a')
-        self.assertRaises(AttributeError, t.y.popitem)
-        self.assertRaises(AttributeError, t.y.clear)
-        self.assertRaises(AttributeError, t.y.update, {})
-        self.assertRaises(AttributeError, t.y.setdefault, 'a')
+        # callable default also linked to instance
+        self.assertIs(t.y._instance, t.x._instance)
+        # modifying default does fix the attribute value
+        t.y['c'] = 9
+        self.assertEqual(t.y, {'a': 8, 'b': 140, 'c': 9})
+        t.x = {}
+        self.assertEqual(t.y, {'a': 8, 'b': 140, 'c': 9})
+        # deleting the attribute value restores the default
+        del t.y
+        self.assertEqual(t.y, {})
 
     def test_converter(self):
         a = QualifiedMultiValueAttribute(str, converter=str)

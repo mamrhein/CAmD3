@@ -290,8 +290,8 @@ def _convert_n_check_value_sets(meth):
 
 class _MultiValue(set):
 
-    """Proxy for a set-like container, linked to an instance and an
-    attriute of that instance"""
+    """Set-like container, linked to an instance and an attriute of that
+    instance"""
 
     def __init__(self, attr: Attribute, instance: Any = None,
                  values: Iterable[Any] = set()) -> None:
@@ -300,6 +300,15 @@ class _MultiValue(set):
         self._immutable = attr.immutable or isinstance(instance, Immutable)
         convert, check = attr._convert_value, attr._check_value
         super().__init__((check(convert(value)) for value in values))
+
+    @property
+    def instance(self) -> Any:
+        return self._instance
+
+    @instance.setter
+    def instance(self, instance: Any) -> None:
+        self._instance = instance
+        self._immutable = self._immutable or isinstance(instance, Immutable)
 
     # add(elem)
     add = _set_attr(_convert_n_check_value(set.add))
@@ -331,6 +340,15 @@ class _MultiValue(set):
                   (set.symmetric_difference_update))
     # self ^= other
     __ixor__ = _set_attr(_convert_n_check_value_sets(set.__ixor__))
+
+    def __copy__(self):
+        """copy(self)"""
+        res = set.__new__(self.__class__)
+        set.__init__(res, self)
+        res._attr = self._attr
+        res._instance = self._instance
+        res._immutable = self._immutable
+        return res
 
     def __repr__(self) -> str:
         """repr(self)"""
@@ -369,13 +387,11 @@ class MultiValueAttribute(Attribute):
             return self         # (i.e. self),
         else:                   # else return value of storage attribute ...
             multi_val = super().__get__(instance, owner)
-            if multi_val is self._default:
+            if multi_val.instance is None:
                 # associate default with instance
-                # TODO: optimize -> use copy of default (the values do not
-                # need to be checked by __init__ again)
-                return _MultiValue(self, instance, multi_val)
-            else:
-                return multi_val
+                multi_val = multi_val.__copy__()
+                multi_val.instance = instance
+            return multi_val
 
     def __set__(self, instance: object, values: Iterable) -> None:
         """Set values of managed multi-value attribute."""
@@ -403,6 +419,15 @@ class _QualifiedMultiValue(dict):
             it = items
         super().__init__(((check_key(key), check_value(convert(value)))
                           for (key, value) in it))
+
+    @property
+    def instance(self) -> Any:
+        return self._instance
+
+    @instance.setter
+    def instance(self, instance: Any) -> None:
+        self._instance = instance
+        self._immutable = self._immutable or isinstance(instance, Immutable)
 
     # __setitem__(key, value, /)
     @_set_attr
@@ -441,6 +466,15 @@ class _QualifiedMultiValue(dict):
         return super().setdefault(attr._check_key(key),
                                   attr._check_value(
                                       attr._convert_value(default)))
+
+    def __copy__(self):
+        """copy(self)"""
+        res = dict.__new__(self.__class__)
+        dict.__init__(res, self)
+        res._attr = self._attr
+        res._instance = self._instance
+        res._immutable = self._immutable
+        return res
 
     def __repr__(self) -> str:
         """repr(self)"""
@@ -496,13 +530,11 @@ class QualifiedMultiValueAttribute(Attribute):
             return self         # (i.e. self),
         else:                   # else return value of storage attribute ...
             multi_val = super().__get__(instance, owner)
-            if multi_val is self._default:
+            if multi_val.instance is None:
                 # associate default with instance
-                # TODO: optimize -> use copy of default (the values do not
-                # need to be checked by __init__ again)
-                return _QualifiedMultiValue(self, instance, multi_val)
-            else:
-                return multi_val
+                multi_val = multi_val.__copy__()
+                multi_val.instance = instance
+            return multi_val
 
     def __set__(self, instance: object, values: Union[Iterable, Mapping]) \
             -> None:
