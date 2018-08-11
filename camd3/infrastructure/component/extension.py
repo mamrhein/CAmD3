@@ -138,7 +138,7 @@ class TransientExtension(Extension):
     def __init_subclass__(cls, **kwds: Any) -> None:
         """Set-up the mapping which contains the extensions instance.
 
-        Extends Extension.__init_subclass."""
+        Extends Extension.__init_subclass__."""
         obj_map = kwds.pop('obj_map', None)
         super().__init_subclass__(**kwds)
         if obj_map is None:
