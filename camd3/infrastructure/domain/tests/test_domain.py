@@ -148,6 +148,16 @@ class Car(Entity):
         self.make = make
         self.model = model
 
+    def change_tire(self, wheel_pos: WheelPosition, tire: Tire) -> None:
+        try:
+            wheel = self.wheels[wheel_pos]
+        except KeyError:
+            raise ValueError(f"No {wheel_pos} wheel") from None
+        wheel.tire = tire
+        # setting attribute of nested entity doesn't trigger change
+        # notification, so it has to be done explicitely
+        self.state_changed()
+
 
 class AggregateTest(unittest.TestCase):
 
@@ -201,6 +211,13 @@ class StateChangedTest(unittest.TestCase):
         self.assertEqual(self.listener.count, 2)
         car.wheels[WheelPosition.front_left] = Wheel(RimType.steel)
         self.assertEqual(self.listener.count, 3)
+        # changing attribute of nested entity doesn't trigger change
+        # notification
+        car.wheels[WheelPosition.front_left].tire = Tire('Goodyear', '18"')
+        self.assertEqual(self.listener.count, 3)
+        # ... unless explicitely done (here via method)
+        car.change_tire(WheelPosition.front_left, Tire('Goodyear', '20"'))
+        self.assertEqual(self.listener.count, 4)
 
 
 # --- ValueObject ---
