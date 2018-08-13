@@ -10,16 +10,21 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module domain"""
+
+
 from copy import copy
 from enum import Enum
 import unittest
-from uuid import UUID
+from typing import Optional
 
 from camd3.infrastructure import register_utility
 from camd3.infrastructure import Attribute
-from camd3.infrastructure.component import UniqueIdentifier
+from camd3.infrastructure.component import (
+    implementer, StateChangedListener, StateChangedNotifyer, UniqueIdentifier)
 from camd3.infrastructure.component.attribute import (
-    QualifiedMultiValueAttribute)
+    MultiValueAttribute, QualifiedMultiValueAttribute)
 from camd3.infrastructure.component.reference import UniqueIdAttribute
 from camd3.infrastructure.domain import (
     Entity, ValueObject, UUIDGenerator, uuid_generator)
@@ -102,8 +107,8 @@ class AggregateRootTest(unittest.TestCase):
 class Tire(Entity):
 
     id = UniqueIdAttribute()
-    make = Attribute()
-    size = Attribute()
+    make = Attribute(immutable=True)
+    size = Attribute(immutable=True)
 
     def __init__(self, make: str, size: str) -> None:
         self.make = make
@@ -119,7 +124,8 @@ class Wheel(Entity):
     type_of_rim = Attribute(immutable=True)
     tire = Attribute(default=None)
 
-    def __init__(self, type_of_rim: RimType, tire: Tire = None) -> None:
+    def __init__(self, type_of_rim: RimType, tire: Optional[Tire] = None) \
+            -> None:
         self.type_of_rim = type_of_rim
         self.tire = tire
 
@@ -131,9 +137,11 @@ WheelPosition = Enum('WheelPosition',
 class Car(Entity):
 
     id = UniqueIdAttribute()
-    make = Attribute()
-    model = Attribute()
-    wheels = QualifiedMultiValueAttribute(WheelPosition)
+    make = Attribute(immutable=True)
+    model = Attribute(immutable=True)
+    wheels = QualifiedMultiValueAttribute(WheelPosition, default={})
+    extras = MultiValueAttribute(default=set())
+    registered = Attribute(default=False)
 
     def __init__(self, make: str, model: str):
         super().__init__(self)
@@ -149,7 +157,7 @@ class AggregateTest(unittest.TestCase):
     def testNestedAccess(self):
         car = self.car
         # no wheels yet
-        self.assertRaises(AttributeError, getattr, car, 'wheels')
+        self.assertEqual(len(car.wheels), 0)
         # let's get some
         front_tire = Tire('FireStone', '18"')
         rear_tire = Tire('BridgeStone', '20"')
@@ -164,6 +172,35 @@ class AggregateTest(unittest.TestCase):
                          '18"')
         self.assertEqual(car.wheels[WheelPosition.rear_right].tire.make,
                          'BridgeStone')
+
+
+@implementer(StateChangedListener)
+class Listener:
+
+    def __init__(self):
+        self.count = 0
+
+    def register_state_changed(self, obj: Entity) -> None:
+        print('listener called', obj.registered, obj.extras, obj.wheels)
+        self.count += 1
+
+
+class StateChangedTest(unittest.TestCase):
+
+    def setUp(self):
+        self.listener = Listener()
+
+    def test_state_changed(self):
+        car = Car('Gaudi', 'Zero')
+        # create notifyer and add listener
+        StateChangedNotifyer(car).add_listener(self.listener)
+        # state changes via attributes trigger notification?
+        car.registered = True
+        self.assertEqual(self.listener.count, 1)
+        car.extras.add('frontspoiler')
+        self.assertEqual(self.listener.count, 2)
+        car.wheels[WheelPosition.front_left] = Wheel(RimType.steel)
+        self.assertEqual(self.listener.count, 3)
 
 
 # --- ValueObject ---
@@ -224,7 +261,7 @@ class VO5(ValueObject):
 
 class VO6(VO2):
 
-    def __getstate__(self):
+    def __getstate__(self):                                 # noqa: D105
         return (self.x, self.y)
 
 

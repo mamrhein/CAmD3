@@ -240,16 +240,6 @@ def implementer(*interfaces: type) -> Callable[[type], type]:
     return _register_cls
 
 
-class StateChangedListener(Component):
-
-    """Abstract base class for listeners on state changes of components.
-    """
-
-    @abstractmethod
-    def register_state_changed(self, obj: Component) -> None:
-        """Called when an associated instance changes its state."""
-
-
 @immutable
 class UniqueIdentifier(Component):
 

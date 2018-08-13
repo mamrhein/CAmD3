@@ -19,7 +19,7 @@
 
 from .attribute import AbstractAttribute, Attribute
 from .component import (
-    Component, implementer, StateChangedListener, UniqueIdentifier)
+    Component, implementer, UniqueIdentifier)
 from .constraints import (LengthConstraint,
                           ValueConstraint, between, ge, gt, instance, is_int,
                           is_number, is_rational, le, length, lt, max_length,
@@ -27,6 +27,7 @@ from .constraints import (LengthConstraint,
 from .immutable import Immutable, immutable, is_immutable
 from .registry import (ComponentLookupError, get_utility, register_factory,
                        register_utility)
+from .statebroker import StateChangedListener, StateChangedNotifyer
 
 
 __all__ = [
@@ -36,7 +37,6 @@ __all__ = [
     # component
     'Component',
     'implementer',
-    'StateChangedListener',
     'UniqueIdentifier',
     # constraints
     'LengthConstraint',
@@ -64,4 +64,7 @@ __all__ = [
     'get_utility',
     'register_factory',
     'register_utility',
+    # statebroker
+    'StateChangedListener',
+    'StateChangedNotifyer',
 ]

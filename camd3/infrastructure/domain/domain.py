@@ -19,7 +19,8 @@
 from typing import Any, Tuple
 
 # local imports
-from ..component import (AbstractAttribute, Component, Immutable)
+from ..component import (AbstractAttribute, Component, Immutable,
+                         StateChangedNotifyer)
 from ...gbbs.tools import all_slot_attrs
 
 
@@ -43,6 +44,25 @@ class Entity(Component):
     def __hash__(self) -> int:
         """hash(self)"""
         return id(self)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """setattr(self, name, value)"""
+        super().__setattr__(name, value)
+        try:
+            self.__dict__[name]
+        except KeyError:
+            pass
+        else:
+            self.state_changed()
+
+    def state_changed(self) -> None:
+        """Signal 'state changed' to interested components."""
+        try:
+            notifyer = StateChangedNotifyer[self]
+        except ValueError:
+            pass
+        else:
+            notifyer.notify_state_changed(self)
 
 
 class ValueObject(Component, Immutable):
