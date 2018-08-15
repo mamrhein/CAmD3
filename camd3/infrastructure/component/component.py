@@ -232,10 +232,25 @@ class Component(metaclass=ComponentMeta):
 
 def implementer(*interfaces: type) -> Callable[[type], type]:
     """Class decorator registering a class that implements the given
-    interfaces."""
+    interfaces.
+
+    It also sets doc strings of methods of the class having no doc string to
+    the doc string of the corresponding method from interfaces.
+    """
     def _register_cls(cls: type) -> type:
         for interface in interfaces:
             interface.register(cls)
+        it = ((name, member) for name, member in cls.__dict__.items()
+              if callable(member) and member.__doc__ is None)
+        for name, member in it:
+            for interface in interfaces:
+                try:
+                    doc = getattr(interface, name).__doc__
+                except AttributeError:
+                    pass
+                else:
+                    member.__doc__ = doc
+                    break
         return cls
     return _register_cls
 
