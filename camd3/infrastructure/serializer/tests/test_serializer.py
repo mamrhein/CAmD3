@@ -10,6 +10,10 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module serializer"""
+
+
 import unittest
 from datetime import datetime, timedelta, tzinfo
 from itertools import zip_longest
@@ -28,7 +32,7 @@ from camd3.types.decimal import Decimal
 from camd3.types.quantity.predefined import Mass
 
 
-def setUpModule():
+def setUpModule():                                              # noqa: D103
     # register needed components
 
     name = 'bson'
@@ -71,6 +75,7 @@ class CEST(tzinfo):
     def dst(self, dt):
         return timedelta(hours=1)
 
+
 cest = CEST()
 
 
@@ -84,7 +89,7 @@ class Name:
     def full_name(self):
         return ' '.join(self.given_names + [self.last_name])
 
-    def __eq__(self, other):
+    def __eq__(self, other):                                    # noqa: D103
         return (self.given_names == other.given_names and
                 self.last_name == other.last_name)
 
@@ -98,7 +103,7 @@ class Address:
         self.zip_code = zip_code
         self.city = city
 
-    def __eq__(self, other):
+    def __eq__(self, other):                                    # noqa: D103
         return (self.street == other.street and
                 self.zip_code == other.zip_code and
                 self.city == other.city)
@@ -112,16 +117,16 @@ class Person:
         self.address = address
         self.weight = weight
 
-    def __eq__(self, other):
+    def __eq__(self, other):                                    # noqa: D103
         return self.__getstate__() == other.__getstate__()
 
-    def __getstate__(self):
+    def __getstate__(self):                                     # noqa: D103
         return (self.id, self.name.full_name, (self.address.street,
                                                self.address.zip_code,
                                                self.address.city),
                 self.weight)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state):                              # noqa: D103
         self.id = state[0]
         full_name = state[1]
         names = full_name.split(' ')
@@ -130,7 +135,7 @@ class Person:
         self.weight = state[3]
 
 
-def create_buffer(mode):
+def create_buffer(mode):                                        # noqa: D103
     return IO_MODE_MAP[mode]()
 
 

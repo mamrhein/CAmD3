@@ -10,9 +10,12 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module state"""
+
+
 import unittest
 from datetime import datetime
-import platform
 from uuid import uuid1
 from camd3.gbbs.tools import all_slot_attrs
 from camd3.infrastructure.serializer.state import State
@@ -31,7 +34,7 @@ class Name:
     def fullName(self):
         return ' '.join(self.givenNames + [self.lastName])
 
-    def __eq__(self, other):
+    def __eq__(self, other):                                    # noqa: D103
         return (self.givenNames == other.givenNames and
                 self.lastName == other.lastName)
 
@@ -45,7 +48,7 @@ class Address:
         self.zipCode = zipCode
         self.city = city
 
-    def __eq__(self, other):
+    def __eq__(self, other):                                    # noqa: D103
         return (self.street == other.street and
                 self.zipCode == other.zipCode and
                 self.city == other.city)
@@ -58,10 +61,10 @@ class Person:
         self.name = name
         self.address = address
 
-    def __eq__(self, other):
+    def __eq__(self, other):                                    # noqa: D103
         return self.__getstate__() == other.__getstate__()
 
-    def __getstate__(self):
+    def __getstate__(self):                                     # noqa: D103
         return (self.id, self.name.fullName, (self.address.street,
                                               self.address.zipCode,
                                               self.address.city))
@@ -78,7 +81,7 @@ class Address2(Address):
 
 class Person2(Person):
 
-    def __setstate__(self, state):
+    def __setstate__(self, state):                              # noqa: D103
         self.id = state[0]
         fullName = state[1]
         names = fullName.split(' ')
