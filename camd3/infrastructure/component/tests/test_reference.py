@@ -10,6 +10,10 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module 'reference'"""
+
+
 from enum import Enum
 import gc
 from operator import getitem
@@ -27,7 +31,7 @@ from camd3.infrastructure.domain import UUIDGenerator, uuid_generator
 
 
 # factory for UUIDs
-def custom_uuid_generator() -> UUIDGenerator:
+def custom_uuid_generator() -> UUIDGenerator:                   # noqa: D103
     while True:
         yield uuid1()
 
@@ -105,9 +109,9 @@ class ReconstructableCar(Car):
 
 
 # add adapter that recreates 'ReconstructableCar' instance
-def uid2car(id: UniqueIdentifier) -> ReconstructableCar:
+def uid2car(id: UniqueIdentifier) -> ReconstructableCar:        # noqa: D103
     return ReconstructableCar(**ReconstructableCar._all_car_specs[id])
-ReconstructableCar.add_adapter(uid2car)
+ReconstructableCar.add_adapter(uid2car)                         # noqa: E305
 
 
 class Garage(Component):
@@ -199,9 +203,9 @@ class ReferenceTest(unittest.TestCase):
     def test_set(self):
         garage = self.garage
         self.assertIsNone(setattr(garage, 'car2',
-                          Car('BMW', '120d', 'PT', '16"')))
+                                  Car('BMW', '120d', 'PT', '16"')))
         self.assertIsNone(setattr(garage, 'car4',
-                          Car('BMW', '116i', 'PT', '16"')))
+                                  Car('BMW', '116i', 'PT', '16"')))
         self.assertRaises(AttributeError, setattr, garage, 'car4',
                           Car('BMW', '116i', 'PT', '16"'))
 

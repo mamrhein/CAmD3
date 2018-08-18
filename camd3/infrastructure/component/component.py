@@ -20,7 +20,8 @@
 # standard lib imports
 from abc import ABCMeta, abstractmethod
 from itertools import chain
-from typing import (Any, Callable, Iterable, MutableMapping, Sequence, Tuple)
+from typing import (Any, Callable, Iterable, MutableMapping,
+                    MutableSequence, Sequence, Tuple)
 from uuid import UUID
 # work-around for issue 29581:
 from _weakrefset import WeakSet
@@ -30,6 +31,11 @@ from .attribute import Attribute
 from .exceptions import ComponentLookupError
 from .immutable import Immutable, immutable
 from .signature import _is_instance, _is_subclass, signature
+from ...gbbs.tools import iter_subclasses
+
+
+Adapter = Callable[[Any], 'Component']
+_AdapterRegistry = MutableMapping[type, MutableSequence[Adapter]]
 
 
 class _ABCSet(set):
@@ -120,7 +126,7 @@ class ComponentMeta(ABCMeta):
                     **kwds: Any) -> MutableMapping:
         namespace = {}
         # additional class attributes
-        adapter_registry = {}   # type: Dict[type, MutableSequence[Callable]]
+        adapter_registry = {}   # type: _AdapterRegistry
         namespace['__virtual_bases__'] = _ABCSet()
         namespace['__adapters__'] = adapter_registry
         return namespace
@@ -144,11 +150,17 @@ class ComponentMeta(ABCMeta):
         try:
             adapter = cls.get_adapter(obj)
         except ComponentLookupError:
-            pass
+            raise TypeError(f"Cannot adapt instance of type '{type(obj)}' "
+                            f"to '{cls.__name__ }'.")
         else:
-            return adapter(obj)
-        raise TypeError("Cannot adapt given object '" + repr(obj) + "' to '" +
-                        cls.__name__ + "'.")
+            try:
+                return adapter(obj)
+            except TypeError:
+                raise TypeError(f"Cannot adapt instance of type '{type(obj)}'"
+                                f" to '{cls.__name__ }'.")
+            except Exception:
+                raise ValueError(f"Cannot adapt given object '{repr(obj)}' "
+                                 f"to '{cls.__name__}'.")
 
     @property
     def attr_names(cls) -> Tuple[str, ...]:
@@ -179,8 +191,9 @@ class ComponentMeta(ABCMeta):
             pass                    # so go without a back reference
         return super().register(subcls)
 
-    def add_adapter(cls, adapter: Callable[[Any], 'ComponentMeta']) \
-            -> Callable[[Any], 'ComponentMeta']:
+    def add_adapter(cls, adapter: Adapter) -> Adapter:
+        """Add `adapter` to the list of adapters providing an instance of
+        `cls`."""
         sgn = signature(adapter)
         return_type = sgn.return_type
         assert _is_subclass(return_type, cls), \
@@ -199,20 +212,35 @@ class ComponentMeta(ABCMeta):
                 adapters.append(adapter)
         return adapter
 
-    def get_adapter(cls, obj):
-        """Return adapter adapting `obj` to the interface defined by `cls`."""
-        # FIXME: make the algo more deterministic
-        found = None
+    def _iter_adapters(cls) -> Iterable[Tuple[type, Adapter]]:
+        """Return an iterable of type / adapter pairs"""
         for required, adapters in cls.__adapters__.items():
+            if adapters:
+                yield required, adapters[-1]
+        for subcls in iter_subclasses(cls):
+            try:
+                items = subcls.__adapters__.items()
+            except AttributeError:
+                pass
+            else:
+                for required, adapters in items:
+                    if adapters:
+                        yield required, adapters[-1]
+
+    def get_adapter(cls, obj: Any) -> Adapter:
+        """Return an adapter adapting `obj` to the interface defined by `cls`.
+        """
+        type_found = None
+        adapter_found = None
+        for required, adapter in cls._iter_adapters():
             if _is_instance(obj, required):
-                if not found or _is_subclass(required, found):
+                if not type_found or _is_subclass(required, type_found):
                     # required is more specific
-                    found, adapter = required, adapters[0]
-        if found:
-            return adapter
-        raise ComponentLookupError("'" + cls.__name__ +
-                                   "': no adapter for '" +
-                                   repr(obj) + "' found.")
+                    type_found, adapter_found = required, adapter
+        if type_found:
+            return adapter_found
+        raise ComponentLookupError(f"'{cls.__name__}: no adapter for "
+                                   f"'{repr(obj)}' found.")
 
     def __repr__(cls):
         """repr(cls)"""

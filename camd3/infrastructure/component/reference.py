@@ -150,7 +150,7 @@ class Reference(AbstractAttribute, metaclass=ReferenceMeta):
                 # reconstruct obj
                 try:
                     obj = self.ref_type[uid]
-                except TypeError:
+                except (TypeError, ValueError):
                     msg = (f"Can't reconstruct '{self.ref_type}' instance "
                            "from id.")
                     raise AttributeError(msg) from None

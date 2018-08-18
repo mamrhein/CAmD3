@@ -200,8 +200,8 @@ class ComponentMetaTest(unittest.TestCase):
         adapter = TestComp6.add_adapter(Obj2TestComp6)
         self.assertEqual(adapter, Obj2TestComp6)
         # retrieve adapters
-        self.assertEqual(TestComp1.get_adapter(5), fct)
-        self.assertEqual(TestComp1.get_adapter(5.0), fct)
+        self.assertEqual(TestComp1.get_adapter(5), Number2TestComp1)
+        self.assertEqual(TestComp1.get_adapter(5.0), Number2TestComp1)
         self.assertRaises(ComponentLookupError, TestComp1.get_adapter, 'x')
         self.assertEqual(TestComp2.get_adapter('abc'), Str2TestComp2)
         self.assertRaises(ComponentLookupError, TestComp2.get_adapter, 3)
@@ -209,6 +209,8 @@ class ComponentMetaTest(unittest.TestCase):
         self.assertEqual(TestComp6.get_adapter([3, 1, 'x']), Obj2TestComp6)
         self.assertEqual(TestComp6.get_adapter(TestComp6(3, 1, 'x')),
                          Obj2TestComp6)
+        self.assertEqual(TestComp4.get_adapter((3, 1, 'x')), Tuple2TestComp6)
+        self.assertEqual(TestComp4.get_adapter([3, 1, 'x']), Obj2TestComp6)
         # adapt objects
         self.assertIsInstance(TestComp1.adapt(5), TestComp1)
         self.assertIsInstance(TestComp1[5.0], TestComp1)
