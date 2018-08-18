@@ -24,7 +24,7 @@ from abc import abstractmethod
 
 
 # local imports
-from .component import Component
+from .component import Component, implementer
 from .attribute import MultiValueAttribute
 from .extension import TransientExtension
 
@@ -39,9 +39,34 @@ class StateChangedListener(Component):
         """Called when an associated instance changes its state."""
 
 
-class StateChangedNotifyer(TransientExtension):
+class StateChangedNotifyer(Component):
 
-    """Abstract base class for notifyers of state changes of components."""
+    """Abstract base class of components notifying state changes of
+    components.
+    """
+
+    @abstractmethod
+    def add_listener(self, listener: StateChangedListener) -> None:
+        """Add `listener` to the set of registered listeners."""
+
+    @abstractmethod
+    def remove_listener(self, listener: StateChangedListener) -> None:
+        """Remove `listener` from the set of registered listeners."""
+
+    @abstractmethod
+    def notify_state_changed(self, obj: Component):
+        """Notify all registered listeners about a state change.
+
+        Calls `register_state_changed` of each listener.
+        """
+
+
+@implementer(StateChangedNotifyer)
+class StateChangedNotifyerExtension(TransientExtension):
+
+    """Base class for notifyers of state changes of components,
+    attached to the component as transient extension.
+    """
 
     __slots__ = ('_listeners_',)
 
@@ -59,14 +84,11 @@ class StateChangedNotifyer(TransientExtension):
         pass
 
     def add_listener(self, listener: StateChangedListener) -> None:
-        """Add `listener` to the set of registered listeners."""
         self._listeners.add(listener)
 
     def remove_listener(self, listener: StateChangedListener) -> None:
-        """Remove `listener` from the set of registered listeners."""
         self._listeners.remove(listener)
 
     def notify_state_changed(self, obj: Component):
-        """"""
         for listener in self._listeners:
             listener.register_state_changed(obj)

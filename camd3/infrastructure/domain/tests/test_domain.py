@@ -26,6 +26,7 @@ from camd3.infrastructure.component import (
 from camd3.infrastructure.component.attribute import (
     MultiValueAttribute, QualifiedMultiValueAttribute)
 from camd3.infrastructure.component.reference import UniqueIdAttribute
+from camd3.infrastructure.component.statebroker import StateChangedNotifyerExtension
 from camd3.infrastructure.domain import (
     Entity, ValueObject, UUIDGenerator, uuid_generator)
 
@@ -203,7 +204,7 @@ class StateChangedTest(unittest.TestCase):
     def test_state_changed(self):
         car = Car('Gaudi', 'Zero')
         # create notifyer and add listener
-        StateChangedNotifyer(car).add_listener(self.listener)
+        StateChangedNotifyerExtension(car).add_listener(self.listener)
         # state changes via attributes trigger notification?
         car.registered = True
         self.assertEqual(self.listener.count, 1)

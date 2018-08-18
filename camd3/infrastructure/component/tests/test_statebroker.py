@@ -20,6 +20,8 @@ import unittest
 from camd3.infrastructure.component import (
     Attribute, Component, implementer, StateChangedListener,
     StateChangedNotifyer)
+from camd3.infrastructure.component.statebroker import (
+    StateChangedNotifyerExtension)
 
 
 class Comp1(Component):
@@ -58,9 +60,9 @@ class StatebrokerTest(unittest.TestCase):
         obj = Comp1(5)
         self.assertEqual(len(self.listener.changed_objs), 0)
         # attach notifyer to obj
-        notifyer = StateChangedNotifyer(obj)
+        notifyer = StateChangedNotifyerExtension(obj)
         # there can only be one notifyer per object
-        self.assertIs(notifyer, StateChangedNotifyer(obj))
+        self.assertIs(notifyer, StateChangedNotifyerExtension(obj))
         # add listener
         notifyer.add_listener(self.listener)
         # nothing changed so far
