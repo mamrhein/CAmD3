@@ -96,28 +96,7 @@ class ComponentMeta(ABCMeta):
                         new_slots.append(priv_member)
             namespace['__slots__'] = tuple(chain(slots, new_slots))
         # create class
-        # cls = super().__new__(metacls, cls_name, bases, namespace, **kwds)
-        # --- work-around for issue 29581:
-        # ABCMeta.__new__ does not support **kwargs, we cannot call it here.
-        # Instead we call type.__new__ directly and implement the rest of
-        # ABCMeta.__new__ here.
-        cls = type.__new__(metacls, cls_name, bases, namespace, **kwds)
-        # Compute set of abstract method names
-        abstracts = {name
-                     for name, value in namespace.items()
-                     if getattr(value, "__isabstractmethod__", False)}
-        for base in bases:
-            for name in getattr(base, "__abstractmethods__", set()):
-                value = getattr(cls, name, None)
-                if getattr(value, "__isabstractmethod__", False):
-                    abstracts.add(name)
-        cls.__abstractmethods__ = frozenset(abstracts)
-        # Set up inheritance registry
-        cls._abc_registry = WeakSet()
-        cls._abc_cache = WeakSet()
-        cls._abc_negative_cache = WeakSet()
-        cls._abc_negative_cache_version = ABCMeta._abc_invalidation_counter
-        # --- end work-around
+        cls = super().__new__(metacls, cls_name, bases, namespace, **kwds)
         # now the new class is ready
         return cls
 
