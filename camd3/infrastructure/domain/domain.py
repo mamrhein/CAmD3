@@ -34,6 +34,9 @@ class Entity(Component):
                            doc="Attribute representing the "
                                "identity of the entity.")
 
+    # TODO: add version to allow pickling / unpickling instances with
+    # different state caused by adding / removing attributes
+
     def __eq__(self, other: Any) -> bool:
         """self == other
 
@@ -54,6 +57,14 @@ class Entity(Component):
             pass
         else:
             self.state_changed()
+
+    # def __getstate__(self):
+    #     """Return the entity's state."""
+    # TODO: add version
+
+    # def __setstate__(self, state: Mapping[str, Any]):
+    #     """Set the entity's state."""
+    #  TODO: reconstruct version specific
 
     def state_changed(self) -> None:
         """Signal 'state changed' to interested components."""
