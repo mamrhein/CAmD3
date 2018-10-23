@@ -341,14 +341,26 @@ class _MultiValue(set):
     # self ^= other
     __ixor__ = _set_attr(_convert_n_check_value_sets(set.__ixor__))
 
-    def __copy__(self):
-        """copy(self)"""
-        res = set.__new__(self.__class__)
-        set.__init__(res, self)
-        res._attr = self._attr
-        res._instance = self._instance
-        res._immutable = self._immutable
-        return res
+    def __reduce__(self) -> Tuple:
+        """Return state information for pickling."""
+        # neccessary to overwrite set.__reduce__
+        return (super().__new__, (self.__class__,), self.__getstate__())
+
+    def __getstate__(self) -> Tuple:
+        """Return the instance' state for later re-instantiation via
+        __setstate__."""
+        assert self._instance is not None, "Can't get state of default value."
+        return (self._attr.name, self._instance, tuple(self))
+
+    def __setstate__(self, state: Tuple):
+        """Re-instantiate instance from state saved via __getstate__."""
+        attr_name, instance, values = state
+        cls = instance.__class__
+        attr = getattr(cls, attr_name)
+        self._attr = attr
+        self._instance = instance
+        self._immutable = attr.immutable or isinstance(instance, Immutable)
+        super().__init__(values)
 
     def __repr__(self) -> str:
         """repr(self)"""
@@ -389,8 +401,7 @@ class MultiValueAttribute(Attribute):
             multi_val = super().__get__(instance, owner)
             if multi_val.instance is None:
                 # associate default with instance
-                multi_val = multi_val.__copy__()
-                multi_val.instance = instance
+                multi_val = _MultiValue(self, instance, multi_val)
             return multi_val
 
     def __set__(self, instance: object, values: Iterable) -> None:
@@ -467,14 +478,26 @@ class _QualifiedMultiValue(dict):
                                   attr._check_value(
                                       attr._convert_value(default)))
 
-    def __copy__(self):
-        """copy(self)"""
-        res = dict.__new__(self.__class__)
-        dict.__init__(res, self)
-        res._attr = self._attr
-        res._instance = self._instance
-        res._immutable = self._immutable
-        return res
+    def __reduce__(self) -> Tuple:
+        """Return state information for pickling."""
+        # neccessary to overwrite object.__reduce__
+        return (super().__new__, (self.__class__,), self.__getstate__())
+
+    def __getstate__(self) -> Tuple:
+        """Return the instance' state for later re-instantiation via
+        __setstate__."""
+        assert self._instance is not None, "Can't get state of default value."
+        return (self._attr.name, self._instance, dict(self))
+
+    def __setstate__(self, state: Tuple):
+        """Re-instantiate instance from state saved via __getstate__."""
+        attr_name, instance, items = state
+        cls = instance.__class__
+        attr = getattr(cls, attr_name)
+        self._attr = attr
+        self._instance = instance
+        self._immutable = attr.immutable or isinstance(instance, Immutable)
+        super().__init__(items)
 
     def __repr__(self) -> str:
         """repr(self)"""
@@ -532,8 +555,7 @@ class QualifiedMultiValueAttribute(Attribute):
             multi_val = super().__get__(instance, owner)
             if multi_val.instance is None:
                 # associate default with instance
-                multi_val = multi_val.__copy__()
-                multi_val.instance = instance
+                multi_val = _QualifiedMultiValue(self, instance, multi_val)
             return multi_val
 
     def __set__(self, instance: object, values: Union[Iterable, Mapping]) \

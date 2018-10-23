@@ -16,6 +16,7 @@
 
 from abc import ABC
 from operator import delitem, setitem
+from pickle import dumps, loads
 import unittest
 
 from camd3.infrastructure.component.attribute import (
@@ -39,7 +40,24 @@ class HelperTest(unittest.TestCase):
 def create_cls(cls_name, attr_dict, bases=(ABC,)):              # noqa: D103
     for name, attr in attr_dict.items():
         attr.__set_name__(None, name)
-    return type(str(cls_name), bases, attr_dict)
+    ns = {'__module__': __name__}
+    ns.update(attr_dict)
+    return type(str(cls_name), bases, ns)
+
+
+class PMVATest:
+
+    """Helper class to test pickling instances with a MultiValueAttribute"""
+
+    x = MultiValueAttribute(constraints=(is_number, non_negative))
+
+
+class PQMVATest:
+
+    """Helper class to test pickling instances with a
+    QualifiedMultiValueAttribute"""
+
+    x = QualifiedMultiValueAttribute(str, constraints=is_number)
 
 
 class AbstractAttributeTest(unittest.TestCase):
@@ -486,6 +504,15 @@ class MultiValueAttributeTest(unittest.TestCase):
         self.assertRaises(ValueError, setattr, t, 'x', {9})
         self.assertRaises(ValueError, setattr, t, 'x', {2})
 
+    def test_pickling(self):
+        # For pickling we have to use a class defined on module level
+        t1 = PMVATest()
+        t1.x = {5}
+        # get / set state
+        st = dumps(t1)
+        t2 = loads(st)
+        self.assertEqual(t1.__dict__, t2.__dict__)
+
 
 class QualifiedMultiValueAttributeTest(unittest.TestCase):
 
@@ -696,6 +723,15 @@ class QualifiedMultiValueAttributeTest(unittest.TestCase):
         self.assertRaises(ValueError, setattr, t, 'x', {'a': -3})
         self.assertRaises(ValueError, setattr, t, 'x', {'a': 9})
         self.assertRaises(ValueError, setattr, t, 'x', {'a': 2})
+
+    def test_pickling(self):
+        # For pickling we have to use a class defined on module level
+        t1 = PQMVATest()
+        t1.x = {'a': 7}
+        # get / set state
+        st = dumps(t1)
+        t2 = loads(st)
+        self.assertEqual(t1.__dict__, t2.__dict__)
 
 
 if __name__ == '__main__':
