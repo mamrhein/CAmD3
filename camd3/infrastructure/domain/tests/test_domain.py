@@ -16,17 +16,19 @@
 
 from copy import copy
 from enum import Enum
+from pickle import dumps, loads
 import unittest
 from typing import Optional
 
 from camd3.infrastructure import register_utility
 from camd3.infrastructure import Attribute
 from camd3.infrastructure.component import (
-    implementer, StateChangedListener, StateChangedNotifyer, UniqueIdentifier)
+    implementer, StateChangedListener, UniqueIdentifier)
 from camd3.infrastructure.component.attribute import (
     MultiValueAttribute, QualifiedMultiValueAttribute)
 from camd3.infrastructure.component.reference import UniqueIdAttribute
-from camd3.infrastructure.component.statebroker import StateChangedNotifyerExtension
+from camd3.infrastructure.component.statebroker import (
+    StateChangedNotifyerExtension)
 from camd3.infrastructure.domain import (
     Entity, ValueObject, UUIDGenerator, uuid_generator)
 
@@ -185,6 +187,38 @@ class AggregateTest(unittest.TestCase):
                          'BridgeStone')
 
 
+class SerializeTest(unittest.TestCase):
+
+    def setUp(self):
+        self.car = car = Car('Gaudi', 'X7')
+        front_tire = Tire('FireStone', '18"')
+        rear_tire = Tire('BridgeStone', '20"')
+        car.wheels = {
+            WheelPosition.front_left: Wheel(RimType.alu, front_tire),
+            WheelPosition.front_right: Wheel(RimType.alu, front_tire),
+            WheelPosition.rear_left: Wheel(RimType.alu, rear_tire),
+            WheelPosition.rear_right: Wheel(RimType.alu, rear_tire)
+        }
+        car.extras.add('front spoiler')
+        car.extras.add('sport seats')
+
+    def test_pickle(self):
+        car1 = self.car
+        buf = dumps(car1)
+        car2 = loads(buf)
+        self.assertNotEqual(car1.id, car2.id)
+        self.assertEqual(car1.make, car2.make)
+        self.assertEqual(car1.model, car2.model)
+        self.assertEqual(car1.extras, car2.extras)
+        self.assertEqual(car1.registered, car2.registered)
+        for pos in WheelPosition:
+            wheel_car1 = car1.wheels[pos]
+            wheel_car2 = car2.wheels[pos]
+            self.assertEqual(wheel_car1.type_of_rim, wheel_car2.type_of_rim)
+            self.assertEqual(wheel_car1.tire.size, wheel_car2.tire.size)
+            self.assertEqual(wheel_car1.tire.make, wheel_car2.tire.make)
+
+
 @implementer(StateChangedListener)
 class Listener:
 
@@ -192,7 +226,6 @@ class Listener:
         self.count = 0
 
     def register_state_changed(self, obj: Entity) -> None:
-        print('listener called', obj.registered, obj.extras, obj.wheels)
         self.count += 1
 
 
