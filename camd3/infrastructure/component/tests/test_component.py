@@ -125,6 +125,14 @@ class TestComp7(TestComp6):
     """TestComp7"""
 
 
+class TestComp8(TestComp1):
+    """TestComp8"""
+
+    def __init__(self, a):
+        self.a = a
+        self.i = self.initialized
+
+
 class ABCSetTest(unittest.TestCase):
 
     def testAdd(self):
@@ -229,6 +237,14 @@ class ComponentMetaTest(unittest.TestCase):
     def test_repr(self):
         self.assertEqual(repr(TestComp3),
                          '.'.join((__name__, TestComp3.__qualname__)))
+
+
+class ComponentTest(unittest.TestCase):
+
+    def test_constructor(self):
+        comp = TestComp8(19)
+        self.assertFalse(comp.i)
+        self.assertTrue(comp.initialized)
 
 
 class UniqueIdentifierTest(unittest.TestCase):

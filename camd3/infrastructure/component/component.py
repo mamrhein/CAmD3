@@ -23,8 +23,6 @@ from itertools import chain
 from typing import (Any, Callable, Iterable, MutableMapping,
                     MutableSequence, Sequence, Tuple)
 from uuid import UUID
-# work-around for issue 29581:
-from _weakrefset import WeakSet
 
 # local imports
 from .attribute import Attribute
@@ -56,6 +54,9 @@ class _ABCSet(set):
         super().add(abc)
         for cls in to_be_removed:
             self.remove(cls)
+
+
+INIT_MARKER = '@'
 
 
 class ComponentMeta(ABCMeta):
@@ -109,6 +110,23 @@ class ComponentMeta(ABCMeta):
         namespace['__virtual_bases__'] = _ABCSet()
         namespace['__adapters__'] = adapter_registry
         return namespace
+
+    def __call__(cls, *args, **kwds) -> 'Component':
+        """Return new instance of `cls`."""
+        comp = cls.__new__(cls, *args, **kwds)
+        if isinstance(comp, cls):
+            # mark instance as 'not yet initialized' (if it has a __dict__)
+            try:
+                comp.__dict__[INIT_MARKER] = True
+            except AttributeError:
+                pass
+            comp.__init__(*args, **kwds)
+            # remove marker
+            try:
+                del comp.__dict__[INIT_MARKER]
+            except AttributeError:
+                pass
+        return comp
 
     def __dir__(cls) -> Sequence[str]:
         """dir(cls)"""
@@ -235,6 +253,22 @@ class Component(metaclass=ComponentMeta):
     @abstractmethod
     def __init__(self, *args, **kwds) -> None:
         """Initialize instance of component."""
+
+    @property
+    def initialized(self):
+        """Return `True` if `self` is initialized, `False` otherwise.
+
+        Initialized means that either
+        * `self.__init__` has been called and has returned, or
+        * the components subclass `__new__` method did not return an instance
+          of that class (and `self.__init__` therefor has not been called).
+        """
+        try:
+            self.__dict__[INIT_MARKER]
+        except (AttributeError, KeyError):
+            return True
+        else:
+            return False
 
 
 def implementer(*interfaces: type) -> Callable[[type], type]:
