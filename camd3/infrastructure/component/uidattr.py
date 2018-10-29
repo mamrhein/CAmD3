@@ -48,9 +48,18 @@ class UniqueIdAttribute(AbstractAttribute):
             try:
                 return getattr(instance, self._priv_member)
             except AttributeError:
-                uid_gen = self._uid_gen
-                if uid_gen is None:
-                    uid_gen = get_utility(UUIDGenerator)
-                uid = next(uid_gen)
-                setattr(instance, self._priv_member, uid)
-                return uid
+                raise AttributeError(f"Unassigned attribute '{self.name}'.") \
+                    from None
+
+    def set_once(self, instance: Any):
+        try:
+            getattr(instance, self._priv_member)
+        except AttributeError:
+            uid_gen = self._uid_gen
+            if uid_gen is None:
+                uid_gen = get_utility(UUIDGenerator)
+            uid = next(uid_gen)
+            setattr(instance, self._priv_member, uid)
+        else:
+            raise AttributeError(f"Can't modify immutable attribute "
+                                 f"'{self.name}'.")

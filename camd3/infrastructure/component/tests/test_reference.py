@@ -80,7 +80,7 @@ class Car(Component):
 
     def __init__(self, make: str, model: str, type_of_rim: RimType,
                  tire: Tire):
-        super().__init__(self)
+        self.__class__.id.set_once(self)
         self.make = make
         self.model = model
         self.wheels = {pos: Wheel(type_of_rim, tire)

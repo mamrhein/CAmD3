@@ -16,6 +16,7 @@
 """Base classes for domain driven design"""
 
 # standard lib imports
+from abc import abstractmethod
 from typing import Any, Tuple
 
 # local imports
@@ -36,6 +37,14 @@ class Entity(Component):
 
     # TODO: add version to allow pickling / unpickling instances with
     # different state caused by adding / removing attributes
+
+    @abstractmethod
+    def __init__(self, id: Any = None):
+        """Initialize entity."""
+        if id is None:
+            self.__class__.id.set_once(self)
+        else:
+            self.id = id
 
     def __eq__(self, other: Any) -> bool:
         """self == other

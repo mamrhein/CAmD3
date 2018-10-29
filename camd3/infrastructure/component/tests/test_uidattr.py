@@ -35,7 +35,7 @@ class ExplID(Component):
     id = UniqueIdAttribute(uid_gen=custom_uuid_generator())
 
     def __init__(self):
-        pass
+        self.__class__.id.set_once(self)
 
 
 class ImplID(Component):
@@ -43,7 +43,7 @@ class ImplID(Component):
     id = UniqueIdAttribute()
 
     def __init__(self):
-        pass
+        self.__class__.id.set_once(self)
 
 
 class UniqueIdAttributeTest(unittest.TestCase):
@@ -52,13 +52,12 @@ class UniqueIdAttributeTest(unittest.TestCase):
         register_utility(uuid_generator(), UUIDGenerator)
         self.cid = ImplID()
 
-    def testLazyInit(self):
+    def test_init(self):
         cid = ImplID()
-        self.assertRaises(AttributeError, getattr, cid, '_id')
         self.assertIsNotNone(cid.id)
         self.assertIsNotNone(cid._id)
 
-    def testUniqueness(self):
+    def test_uniqueness(self):
         ids = {self.cid.id}
         for i in range(10):
             cid = ExplID()

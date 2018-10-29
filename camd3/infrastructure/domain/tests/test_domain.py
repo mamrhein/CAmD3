@@ -45,7 +45,7 @@ class TestEntity1(Entity):
     id = Attribute(immutable=True,)
 
     def __init__(self, id):
-        self.id = id
+        super().__init__(id)
 
 
 class TestEntity2(Entity):
@@ -53,7 +53,7 @@ class TestEntity2(Entity):
     id = Attribute(immutable=True,)
 
     def __init__(self, id):
-        self.id = id
+        super().__init__(id)
 
 
 class EntityTest(unittest.TestCase):
@@ -85,8 +85,8 @@ class TestAggregate(Entity):
 
     id = UniqueIdAttribute()
 
-    def __init__(self, *args, **kwds):
-        super().__init__(self, *args, **kwds)
+    def __init__(self):
+        super().__init__()
 
 
 class AggregateRootTest(unittest.TestCase):
@@ -113,6 +113,7 @@ class Tire(Entity):
     size = Attribute(immutable=True)
 
     def __init__(self, make: str, size: str) -> None:
+        super().__init__()
         self.make = make
         self.size = size
 
@@ -128,6 +129,7 @@ class Wheel(Entity):
 
     def __init__(self, type_of_rim: RimType, tire: Optional[Tire] = None) \
             -> None:
+        super().__init__()
         self.type_of_rim = type_of_rim
         self.tire = tire
 
@@ -146,7 +148,7 @@ class Car(Entity):
     registered = Attribute(default=False)
 
     def __init__(self, make: str, model: str):
-        super().__init__(self)
+        super().__init__()
         self.make = make
         self.model = model
 
