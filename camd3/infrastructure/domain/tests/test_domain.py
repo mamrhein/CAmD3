@@ -147,8 +147,12 @@ class Car(Entity):
     extras = MultiValueAttribute(default=set())
     registered = Attribute(default=False)
 
-    def __init__(self, make: str, model: str):
+    def __init__(self, make: str, model: str, *,
+                 listener: StateChangedListener = None):
         super().__init__()
+        if listener:
+            # create notifyer and add listener
+            StateChangedNotifyerExtension(self).add_listener(listener)
         self.make = make
         self.model = model
 
@@ -161,6 +165,10 @@ class Car(Entity):
         # setting attribute of nested entity doesn't trigger change
         # notification, so it has to be done explicitely
         self.state_changed()
+
+    def __repr__(self):
+        """repr(self)"""
+        return f"<{self.__class__.__name__}: {self.id} "
 
 
 class AggregateTest(unittest.TestCase):
@@ -237,9 +245,7 @@ class StateChangedTest(unittest.TestCase):
         self.listener = Listener()
 
     def test_state_changed(self):
-        car = Car('Gaudi', 'Zero')
-        # create notifyer and add listener
-        StateChangedNotifyerExtension(car).add_listener(self.listener)
+        car = Car('Gaudi', 'Zero', listener = self.listener)
         # state changes via attributes trigger notification?
         car.registered = True
         self.assertEqual(self.listener.count, 1)

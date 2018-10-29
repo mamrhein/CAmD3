@@ -65,7 +65,8 @@ class Entity(Component):
         except KeyError:
             pass
         else:
-            self.state_changed()
+            if self.initialized:
+                self.state_changed()
 
     # def __getstate__(self):
     #     """Return the entity's state."""
