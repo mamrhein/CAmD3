@@ -19,16 +19,14 @@
 
 # standard library imports
 from abc import ABCMeta
-from typing import Any, Dict, Iterator, Optional, Text, Tuple, Type
+from typing import Any, Dict, Optional, Text, Tuple, Type
 from weakref import ref as WeakRef
 
-# third-party imports
-
-
 # local imports
-from . import Component, get_utility, Immutable, UniqueIdentifier
 from .attribute import AbstractAttribute
-from ..domain import UUIDGenerator
+from .component import Component
+from .immutable import Immutable
+from .uid import UniqueIdentifier
 
 
 class ReferenceMeta(ABCMeta):
@@ -177,32 +175,3 @@ class Reference(AbstractAttribute, metaclass=ReferenceMeta):
 def ref(ref_type: Type[Component], *, immutable: bool = False,
         doc: Optional[Text] = None) -> Reference[Component]:
     return Reference[ref_type](immutable=immutable, doc=doc)
-
-
-class UniqueIdAttribute(AbstractAttribute):
-
-    """Descriptor class for defining unique ids as attributes of objects."""
-
-    __isabstractmethod__ = False
-
-    def __init__(self, *,
-                 uid_gen: Optional[UUIDGenerator] = None,
-                 doc: Optional[Text] = 'Unique id.') -> None:
-        """Initialze attribute."""
-        super().__init__(immutable=True, doc=doc)
-        self._uid_gen = uid_gen
-
-    def __get__(self, instance: Any, owner: type) -> UniqueIdentifier:
-        """Return unique id."""
-        if instance is None:    # if accessed via class, return descriptor
-            return self         # (i.e. self),
-        else:                   # else return unique id
-            try:
-                return getattr(instance, self._priv_member)
-            except AttributeError:
-                uid_gen = self._uid_gen
-                if uid_gen is None:
-                    uid_gen = get_utility(UUIDGenerator)
-                uid = next(uid_gen)
-                setattr(instance, self._priv_member, uid)
-                return uid

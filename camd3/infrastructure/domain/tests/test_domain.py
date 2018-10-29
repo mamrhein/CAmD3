@@ -20,13 +20,16 @@ from pickle import dumps, loads
 import unittest
 from typing import Optional
 
-from camd3.infrastructure import register_utility
-from camd3.infrastructure import Attribute
 from camd3.infrastructure.component import (
-    implementer, StateChangedListener, UniqueIdentifier)
+    Attribute,
+    implementer,
+    register_utility,
+    StateChangedListener,
+    UniqueIdentifier,
+    UniqueIdAttribute,
+)
 from camd3.infrastructure.component.attribute import (
     MultiValueAttribute, QualifiedMultiValueAttribute)
-from camd3.infrastructure.component.reference import UniqueIdAttribute
 from camd3.infrastructure.component.statebroker import (
     StateChangedNotifyerExtension)
 from camd3.infrastructure.domain import (
@@ -193,12 +196,13 @@ class SerializeTest(unittest.TestCase):
         self.car = car = Car('Gaudi', 'X7')
         front_tire = Tire('FireStone', '18"')
         rear_tire = Tire('BridgeStone', '20"')
-        car.wheels = {
+        wheels = {
             WheelPosition.front_left: Wheel(RimType.alu, front_tire),
             WheelPosition.front_right: Wheel(RimType.alu, front_tire),
             WheelPosition.rear_left: Wheel(RimType.alu, rear_tire),
             WheelPosition.rear_right: Wheel(RimType.alu, rear_tire)
         }
+        car.wheels = wheels
         car.extras.add('front spoiler')
         car.extras.add('sport seats')
 

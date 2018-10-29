@@ -19,21 +19,14 @@ import gc
 from operator import getitem
 from pickle import dumps, loads
 import unittest
-from uuid import uuid1
 
 from camd3.infrastructure.component import (
-    Component, register_utility, UniqueIdentifier)
+    Component, UniqueIdAttribute, UniqueIdentifier)
 from camd3.infrastructure.component.attribute import (
     Attribute, QualifiedMultiValueAttribute)
 from camd3.infrastructure.component.reference import (
-    ref, Reference, ReferenceMeta, UniqueIdAttribute)
-from camd3.infrastructure.domain import UUIDGenerator, uuid_generator
-
-
-# factory for UUIDs
-def custom_uuid_generator() -> UUIDGenerator:                   # noqa: D103
-    while True:
-        yield uuid1()
+    ref, Reference, ReferenceMeta)
+from camd3.infrastructure.domain import uuid_generator
 
 
 class SubRef(Reference):
@@ -232,42 +225,6 @@ class ReferenceTest(unittest.TestCase):
                          '17"')
         # internal reference to recreated 'Car' instance renewed?
         self.assertIsNotNone(garage._car2())
-
-
-class ExplID(Component):
-
-    id = UniqueIdAttribute(uid_gen=custom_uuid_generator())
-
-    def __init__(self):
-        pass
-
-
-class ImplID(Component):
-
-    id = UniqueIdAttribute()
-
-    def __init__(self):
-        pass
-
-
-class UniqueIdAttributeTest(unittest.TestCase):
-
-    def setUp(self):
-        register_utility(uuid_generator(), UUIDGenerator)
-        self.cid = ImplID()
-
-    def testLazyInit(self):
-        cid = ImplID()
-        self.assertRaises(AttributeError, getattr, cid, '_id')
-        self.assertIsNotNone(cid.id)
-        self.assertIsNotNone(cid._id)
-
-    def testUniqueness(self):
-        ids = {self.cid.id}
-        for i in range(10):
-            cid = ExplID()
-            self.assertNotIn(cid.id, ids)
-            ids.add(cid.id)
 
 
 if __name__ == '__main__':                              # pragma: no cover

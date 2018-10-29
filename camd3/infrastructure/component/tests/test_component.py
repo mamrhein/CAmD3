@@ -18,11 +18,9 @@ from abc import ABC
 from numbers import Number
 from typing import Tuple
 import unittest
-from uuid import uuid1
 
 from camd3.infrastructure.component import (
-    Attribute, Component, ComponentLookupError, Immutable, implementer,
-    UniqueIdentifier)
+    Attribute, Component, ComponentLookupError, Immutable, implementer)
 from camd3.infrastructure.component.component import _ABCSet, ComponentMeta
 
 
@@ -245,20 +243,6 @@ class ComponentTest(unittest.TestCase):
         comp = TestComp8(19)
         self.assertFalse(comp.i)
         self.assertTrue(comp.initialized)
-
-
-class UniqueIdentifierTest(unittest.TestCase):
-
-    def test_adapt(self):
-        obj = object()
-        self.assertRaises(TypeError, UniqueIdentifier.adapt, obj)
-        uid = uuid1()
-        self.assertIs(UniqueIdentifier[uid], uid)
-        obj = type('Obj', (), {})()
-        obj.id = 5
-        self.assertRaises(TypeError, UniqueIdentifier.adapt, obj)
-        obj.id = uid
-        self.assertIs(UniqueIdentifier[obj], uid)
 
 
 if __name__ == '__main__':

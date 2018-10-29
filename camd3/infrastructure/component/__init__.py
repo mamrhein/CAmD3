@@ -18,8 +18,7 @@
 
 
 from .attribute import AbstractAttribute, Attribute
-from .component import (
-    Component, implementer, UniqueIdentifier)
+from .component import Component, implementer
 from .constraints import (LengthConstraint,
                           ValueConstraint, between, ge, gt, instance, is_int,
                           is_number, is_rational, le, length, lt, max_length,
@@ -28,6 +27,8 @@ from .immutable import Immutable, immutable, is_immutable
 from .registry import (ComponentLookupError, get_utility, register_factory,
                        register_utility)
 from .statebroker import StateChangedListener, StateChangedNotifyer
+from .uid import UniqueIdentifier
+from .uidattr import UniqueIdAttribute
 
 
 __all__ = [
@@ -37,7 +38,6 @@ __all__ = [
     # component
     'Component',
     'implementer',
-    'UniqueIdentifier',
     # constraints
     'LengthConstraint',
     'ValueConstraint',
@@ -67,4 +67,8 @@ __all__ = [
     # statebroker
     'StateChangedListener',
     'StateChangedNotifyer',
+    # uid
+    'UniqueIdentifier',
+    # uidattr
+    'UniqueIdAttribute',
 ]
