@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # ----------------------------------------------------------------------------
 # Name:        test_idgenerators
-# Purpose:     Test driver for id generators in module domain
+# Purpose:     Test driver for module idgenerators
 #
 # Author:      Michael Amrhein (michael@adrhinum.de)
 #
@@ -10,11 +10,15 @@
 # $Source$
 # $Revision$
 
+
+"""Test driver for module idgenerators"""
+
+
 import unittest
 from uuid import UUID
-from camd3.infrastructure.domain.idfactories import (uuid_generator,
-                                                       local_id_generator,
-                                                       local_num_id_generator)
+
+from camd3.infrastructure.component.idfactories import (
+    uuid_generator, local_id_generator, local_num_id_generator)
 
 
 class StringId(str):

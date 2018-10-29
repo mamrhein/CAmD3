@@ -24,9 +24,9 @@ from camd3.infrastructure.component import (
     Component, UniqueIdAttribute, UniqueIdentifier)
 from camd3.infrastructure.component.attribute import (
     Attribute, QualifiedMultiValueAttribute)
+from camd3.infrastructure.component.idfactories import uuid_generator
 from camd3.infrastructure.component.reference import (
     ref, Reference, ReferenceMeta)
-from camd3.infrastructure.domain import uuid_generator
 
 
 class SubRef(Reference):

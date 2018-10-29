@@ -22,9 +22,9 @@ from typing import Any, Optional, Text
 
 # local imports
 from .attribute import AbstractAttribute
+from .idfactories import UUIDGenerator
 from .registry import get_utility
 from .uid import UniqueIdentifier
-from ..domain import UUIDGenerator
 
 
 class UniqueIdAttribute(AbstractAttribute):

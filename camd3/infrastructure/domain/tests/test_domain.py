@@ -21,19 +21,15 @@ import unittest
 from typing import Optional
 
 from camd3.infrastructure.component import (
-    Attribute,
-    implementer,
-    register_utility,
-    StateChangedListener,
-    UniqueIdentifier,
-    UniqueIdAttribute,
-)
+    Attribute, implementer, register_utility, StateChangedListener,
+    UniqueIdentifier, UniqueIdAttribute)
 from camd3.infrastructure.component.attribute import (
     MultiValueAttribute, QualifiedMultiValueAttribute)
+from camd3.infrastructure.component.idfactories import (
+    UUIDGenerator, uuid_generator)
 from camd3.infrastructure.component.statebroker import (
     StateChangedNotifyerExtension)
-from camd3.infrastructure.domain import (
-    Entity, ValueObject, UUIDGenerator, uuid_generator)
+from camd3.infrastructure.domain import Entity, ValueObject
 
 
 # --- Entity ---
@@ -210,7 +206,7 @@ class SerializeTest(unittest.TestCase):
         car1 = self.car
         buf = dumps(car1)
         car2 = loads(buf)
-        self.assertNotEqual(car1.id, car2.id)
+        self.assertEqual(car1.id, car2.id)
         self.assertEqual(car1.make, car2.make)
         self.assertEqual(car1.model, car2.model)
         self.assertEqual(car1.extras, car2.extras)

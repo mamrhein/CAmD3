@@ -20,7 +20,8 @@ from uuid import uuid1
 
 from camd3.infrastructure.component import (
     Component, register_utility, UniqueIdAttribute)
-from camd3.infrastructure.domain import UUIDGenerator, uuid_generator
+from camd3.infrastructure.component.idfactories import (
+    UUIDGenerator, uuid_generator)
 
 
 # factory for UUIDs
